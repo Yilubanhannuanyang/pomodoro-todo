@@ -1,0 +1,16 @@
+{
+  "name": "pomodoro-todo",
+  "version": "1.0.0",
+  "description": "番茄Todo with study room",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.16.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

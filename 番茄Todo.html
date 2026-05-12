@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>番茄Todo</title>
+<style>
+:root {
+  --primary: #e85d4a;
+  --primary-dark: #c0392b;
+  --primary-light: #fdefeb;
+  --bg: #fef6f5;
+  --card: #fff;
+  --text: #2d3436;
+  --text-secondary: #888;
+  --border: #f0e0e0;
+  --ring-bg: #f0e0e0;
+  --shadow: 0 2px 16px rgba(0,0,0,0.06);
+  --success: #00b894;
+  --purple: #6c5ce7;
+  --green: #00b894;
+  --blue: #3498db;
+  --orange: #e67e22;
+}
+[data-theme="dark"] {
+  --primary: #f07060;
+  --primary-dark: #e85d4a;
+  --primary-light: #2a1a18;
+  --bg: #1a1a2e;
+  --card: #1e1e3a;
+  --text: #e0e0e0;
+  --text-secondary: #9090a0;
+  --border: #2a2a4a;
+  --ring-bg: #2a2a4a;
+  --shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  display:flex;justify-content:center;
+  transition:background .3s,color .3s;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.app{width:100%;max-width:420px;padding:12px 16px 40px}
+
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 4px;margin-bottom:4px;
+}
+.header h1{font-size:22px;font-weight:700;display:flex;align-items:center;gap:6px}
+.header h1 .logo{font-size:28px}
+.header-actions{display:flex;gap:8px}
+.icon-btn{
+  width:38px;height:38px;border:none;background:var(--card);
+  border-radius:12px;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);transition:transform .15s;color:var(--text);
+}
+.icon-btn:hover{transform:scale(1.06)}
+.icon-btn:active{transform:scale(.94)}
+
+/* View Tabs */
+.view-tabs{
+  display:flex;background:var(--bg);border-radius:12px;
+  padding:4px;margin-bottom:14px;gap:4px;
+}
+.view-tab{
+  flex:1;padding:10px 6px;border:none;background:transparent;
+  color:var(--text-secondary);border-radius:10px;cursor:pointer;
+  font-size:13.5px;font-weight:600;transition:all .2s;
+  font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.view-tab.active{background:var(--card);color:var(--primary);box-shadow:0 1px 6px rgba(0,0,0,.08)}
+
+/* Timer Card */
+.card{
+  background:var(--card);border-radius:20px;padding:22px 18px;
+  box-shadow:var(--shadow);margin-bottom:12px;transition:background .3s;
+}
+.mode-tabs{
+  display:flex;background:var(--bg);border-radius:12px;
+  padding:4px;margin-bottom:18px;gap:4px;
+}
+.mode-tab{
+  flex:1;padding:9px 6px;border:none;background:transparent;
+  color:var(--text-secondary);border-radius:10px;cursor:pointer;
+  font-size:12.5px;font-weight:500;transition:all .2s;
+  white-space:nowrap;font-family:inherit;
+}
+.mode-tab.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(232,93,74,.3)}
+.mode-tab.short-active{background:var(--green)}
+.mode-tab.long-active{background:var(--purple)}
+
+.timer-ring-wrap{position:relative;width:240px;height:240px;margin:0 auto 16px}
+.timer-ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--ring-bg);stroke-width:8}
+.ring-progress{
+  fill:none;stroke:var(--primary);stroke-width:8;
+  stroke-linecap:round;transition:stroke-dashoffset .5s linear,stroke .3s;
+}
+.ring-progress.short-mode{stroke:var(--green)}
+.ring-progress.long-mode{stroke:var(--purple)}
+
+.timer-center{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);text-align:center;
+}
+.timer-time{
+  font-size:50px;font-weight:700;font-variant-numeric:tabular-nums;
+  letter-spacing:-2px;line-height:1;
+}
+.timer-label{font-size:13px;color:var(--text-secondary);margin-top:5px}
+.timer-current-task{
+  font-size:12px;color:var(--primary);margin-top:3px;
+  max-width:170px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-weight:500;
+}
+
+.timer-actions{display:flex;gap:10px;justify-content:center;align-items:center}
+.btn{
+  padding:11px 24px;border:none;border-radius:14px;
+  font-size:15px;font-weight:600;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;gap:5px;
+  font-family:inherit;
+}
+.btn:active{transform:scale(.95)}
+.btn-primary{
+  background:var(--primary);color:#fff;
+  box-shadow:0 4px 14px rgba(232,93,74,.35);
+  min-width:110px;justify-content:center;
+}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{
+  background:transparent;color:var(--text-secondary);
+  border:2px solid var(--border);padding:11px 20px;
+}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:8px;font-weight:500}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:16px;font-weight:600}
+.task-count{font-size:12px;color:var(--text-secondary)}
+
+.add-task-row{display:flex;gap:8px;margin-bottom:10px}
+.input{
+  flex:1;padding:10px 14px;border:2px solid var(--border);
+  border-radius:12px;font-size:14px;background:var(--bg);
+  color:var(--text);outline:none;transition:border .2s;font-family:inherit;
+}
+.input:focus{border-color:var(--primary)}
+.input::placeholder{color:#c0c0c0}
+
+.task-list{max-height:300px;overflow-y:auto}
+.task-item{
+  display:flex;align-items:center;padding:9px 4px;gap:10px;
+  border-radius:10px;cursor:pointer;transition:background .15s;
+}
+.task-item:hover{background:var(--bg)}
+.task-item.selected{background:var(--primary-light)}
+.task-check{
+  width:20px;height:20px;border:2px solid var(--border);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:#fff;flex-shrink:0;transition:all .2s;cursor:pointer;
+}
+.task-check.done{background:var(--success);border-color:var(--success)}
+.task-name{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task-name.done{text-decoration:line-through;color:var(--text-secondary)}
+.pomo-counter{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--primary);font-weight:600}
+.pomo-counter .dot{font-size:10px}
+.task-delete{
+  width:28px;height:28px;border:none;background:transparent;
+  color:var(--text-secondary);cursor:pointer;border-radius:6px;
+  font-size:16px;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:all .15s;flex-shrink:0;
+}
+.task-item:hover .task-delete{opacity:1}
+.task-delete:hover{background:#ffe0e0;color:var(--primary)}
+
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat-box{text-align:center;padding:14px 6px;background:var(--bg);border-radius:12px}
+.stat-value{font-size:22px;font-weight:700;color:var(--primary);line-height:1}
+.stat-label{font-size:11px;color:var(--text-secondary);margin-top:4px}
+
+/* Study Room */
+.room-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.room-card{
+  background:var(--card);border-radius:16px;padding:16px 12px;
+  box-shadow:var(--shadow);cursor:pointer;transition:all .2s;
+  text-align:center;border:2px solid transparent;
+}
+.room-card:hover{transform:translateY(-2px);border-color:var(--primary)}
+.room-card .room-icon{font-size:32px;margin-bottom:6px}
+.room-card .room-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.room-card .room-meta{font-size:11px;color:var(--text-secondary)}
+.room-card .room-btn{
+  margin-top:10px;padding:6px 14px;border:none;border-radius:8px;
+  background:var(--primary-light);color:var(--primary);font-size:12px;
+  font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;
+}
+.room-card .room-btn:hover{background:var(--primary);color:#fff}
+
+.room-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+}
+.room-header-left{display:flex;align-items:center;gap:10px}
+.room-header-icon{font-size:28px}
+.room-header-info{flex:1}
+.room-header-name{font-size:16px;font-weight:600}
+.room-header-count{font-size:12px;color:var(--text-secondary)}
+.buddy-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;
+}
+.buddy-card{
+  background:var(--bg);border-radius:14px;padding:12px 8px;text-align:center;
+  transition:all .2s;border:2px solid transparent;
+}
+.buddy-card.me{border-color:var(--primary);background:var(--primary-light)}
+.buddy-card:hover{transform:translateY(-1px)}
+.buddy-avatar{
+  width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#ff9a9e,#fecfef);
+  display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 6px;
+}
+.buddy-name{font-size:12px;font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.buddy-task{font-size:10px;color:var(--text-secondary);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.buddy-timer{
+  font-size:13px;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums;
+}
+.buddy-timer.rest{color:var(--green)}
+.buddy-status{
+  font-size:10px;color:var(--text-secondary);margin-top:2px;
+}
+.buddy-actions{display:flex;gap:4px;justify-content:center;margin-top:6px}
+.buddy-actions button{
+  border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px;transition:all .2s;
+}
+.buddy-actions button:hover{background:var(--border);transform:scale(1.15)}
+
+.leaderboard-card{background:var(--card);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.leaderboard-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:4px}
+.leaderboard-row{
+  display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);
+}
+.leaderboard-row:last-child{border-bottom:none}
+.leaderboard-rank{
+  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;background:var(--text-secondary);flex-shrink:0;
+}
+.leaderboard-rank.gold{background:#f1c40f}
+.leaderboard-rank.silver{background:#bdc3c7}
+.leaderboard-rank.bronze{background:#e67e22}
+.leaderboard-name{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leaderboard-time{font-size:12px;font-weight:700;color:var(--primary)}
+
+.room-message{
+  text-align:center;padding:10px;background:var(--bg);border-radius:10px;
+  font-size:12px;color:var(--text-secondary);margin-bottom:12px;
+}
+
+.chat-bubble{
+  display:inline-block;padding:3px 10px;border-radius:10px;
+  background:var(--primary);color:#fff;font-size:11px;margin-top:4px;
+  animation:popIn .3s ease;
+}
+@keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:100;display:flex;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.hidden{display:none}
+.modal-sheet{
+  background:var(--card);border-radius:24px 24px 0 0;
+  width:100%;max-width:420px;padding:24px 20px 32px;
+  animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:18px;font-weight:600;margin-bottom:18px;text-align:center}
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--border);
+}
+.setting-label{font-size:14px}
+.setting-control{display:flex;align-items:center;gap:8px}
+.setting-input{
+  width:60px;padding:6px 8px;border:2px solid var(--border);
+  border-radius:8px;text-align:center;font-size:14px;
+  background:var(--bg);color:var(--text);font-family:inherit;
+}
+.setting-input:focus{outline:none;border-color:var(--primary)}
+.setting-unit{font-size:12px;color:var(--text-secondary)}
+.toggle-switch{
+  width:44px;height:26px;background:var(--border);border-radius:13px;
+  cursor:pointer;position:relative;transition:background .2s;
+}
+.toggle-switch.on{background:var(--primary)}
+.toggle-switch::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;background:#fff;border-radius:50%;
+  transition:transform .2s;
+}
+.toggle-switch.on::after{transform:translateX(18px)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1;justify-content:center}
+
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:#2d3436;color:#fff;padding:10px 22px;border-radius:20px;
+  font-size:13px;z-index:200;pointer-events:none;
+  animation:toastIn .3s, toastOut .3s 1.5s forwards;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(-8px)}}
+
+@keyframes pulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.04)}
+}
+.timer-center.ending{animation:pulse .8s infinite}
+
+.task-list::-webkit-scrollbar{width:4px}
+.task-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.empty-state{text-align:center;padding:20px;color:var(--text-secondary);font-size:13px}
+
+@media(max-width:380px){
+  .timer-ring-wrap{width:210px;height:210px}
+  .timer-time{font-size:42px}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .btn{padding:10px 18px;font-size:14px}
+  .buddy-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <h1><span class="logo">🍅</span>番茄Todo</h1>
+    <div class="header-actions">
+      <button class="icon-btn" id="darkToggle" title="深色模式">🌙</button>
+      <button class="icon-btn" id="settingsBtn" title="设置">⚙️</button>
+    </div>
+  </div>
+
+  <!-- View Tabs -->
+  <div class="view-tabs" id="viewTabs">
+    <button class="view-tab active" data-view="personal">👤 个人专注</button>
+    <button class="view-tab" data-view="studyRoom">🏫 自习室</button>
+  </div>
+
+  <!-- Personal View -->
+  <div id="personalView">
+    <!-- Timer Card -->
+    <div class="card" id="timerCard">
+      <div class="mode-tabs" id="modeTabs">
+        <button class="mode-tab active" data-mode="focus">🍅 专注</button>
+        <button class="mode-tab" data-mode="shortBreak">☕ 短休</button>
+        <button class="mode-tab" data-mode="longBreak">🌿 长休</button>
+      </div>
+
+      <div class="timer-ring-wrap">
+        <svg viewBox="0 0 260 260">
+          <circle class="ring-bg" cx="130" cy="130" r="120"/>
+          <circle class="ring-progress" id="ringProgress" cx="130" cy="130" r="120"/>
+        </svg>
+        <div class="timer-center" id="timerCenter">
+          <div class="timer-time" id="timerTime">25:00</div>
+          <div class="timer-label" id="timerLabel">准备开始</div>
+          <div class="timer-current-task" id="timerCurrentTask"></div>
+        </div>
+      </div>
+
+      <div class="timer-actions">
+        <button class="btn btn-outline" id="skipBtn" style="display:none">跳过</button>
+        <button class="btn btn-primary" id="startBtn">▶ 开始专注</button>
+      </div>
+    </div>
+
+    <!-- Task Card -->
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">📋 待办事项</span>
+        <span class="task-count" id="taskCount">0 个任务</span>
+      </div>
+      <div class="add-task-row">
+        <input class="input" id="taskInput" placeholder="添加新任务..." maxlength="50" autocomplete="off">
+        <button class="btn btn-primary btn-sm" id="addTaskBtn">+ 添加</button>
+      </div>
+      <div class="task-list" id="taskList">
+        <div class="empty-state">还没有任务，添加一个吧 ✨</div>
+      </div>
+    </div>
+
+    <!-- Stats Card -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:12px">📊 今日统计</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-value" id="statFocus">0</div>
+          <div class="stat-label">专注次数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statTime">0min</div>
+          <div class="stat-label">专注时长</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statTasks">0</div>
+          <div class="stat-label">完成任务</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study Room View -->
+  <div id="studyRoomView" style="display:none">
+    <!-- Room List -->
+    <div id="roomListPanel">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">🏫 选择自习室</div>
+        <div class="room-list" id="roomList"></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">💡 自习室说明</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7">
+          <p>• 加入自习室与虚拟学伴一起专注，营造学习氛围</p>
+          <p>• 每位学伴都有独立的倒计时，相互激励</p>
+          <p>• 可为学伴加油打气，增加互动乐趣</p>
+          <p>• 每日房间排行榜展示专注时长排名</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room Detail -->
+    <div id="roomDetailPanel" style="display:none">
+      <div class="card">
+        <div class="room-header">
+          <div class="room-header-left">
+            <span class="room-header-icon" id="roomDetailIcon">📚</span>
+            <div class="room-header-info">
+              <div class="room-header-name" id="roomDetailName">图书馆</div>
+              <div class="room-header-count" id="roomDetailCount">12 人在线</div>
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm" id="leaveRoomBtn">退出房间</button>
+        </div>
+        <div class="room-message" id="roomMessage">欢迎来到自习室，和伙伴们一起加油吧！</div>
+        <div class="buddy-grid" id="buddyGrid"></div>
+        <div style="text-align:center;margin-bottom:10px">
+          <button class="btn btn-primary btn-sm" id="syncRoomBtn">⏱ 将我的计时同步到房间</button>
+        </div>
+      </div>
+      <div class="leaderboard-card">
+        <div class="leaderboard-title">🏆 今日房间排行榜</div>
+        <div id="leaderboardList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal-sheet">
+    <div class="modal-title">⚙️ 设置</div>
+    <div class="setting-row">
+      <span class="setting-label">专注时长 (分钟)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="focusDuration" type="number" min="1" max="120" value="25">
+        <span class="setting-unit">分钟</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">短休时长 (分钟)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="shortBreakDuration" type="number" min="1" max="60" value="5">
+        <span class="setting-unit">分钟</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">长休时长 (分钟)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="longBreakDuration" type="number" min="1" max="120" value="15">
+        <span class="setting-unit">分钟</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">长休间隔 (专注次数)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="longBreakInterval" type="number" min="2" max="10" value="4">
+        <span class="setting-unit">次</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">提示音</span>
+      <div class="toggle-switch on" id="soundToggle"></div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">桌面通知</span>
+      <div class="toggle-switch on" id="notifyToggle"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="closeSettings">取消</button>
+      <button class="btn btn-primary" id="saveSettings">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+class PomodoroApp {
+  constructor() {
+    this.mode = 'focus';
+    this.timerRunning = false;
+    this.timeLeft = 25 * 60;
+    this.totalTime = 25 * 60;
+    this.intervalId = null;
+    this.startTimestamp = null;
+    this.timeAtStart = null;
+    this.currentTaskId = null;
+    this.consecutiveFocus = 0;
+
+    this.settings = {
+      focusDuration: 25,
+      shortBreakDuration: 5,
+      longBreakDuration: 15,
+      longBreakInterval: 4,
+      soundEnabled: true,
+      notificationEnabled: true,
+    };
+
+    this.tasks = [];
+    this.todayStats = this._freshStats();
+
+    // Study Room
+    this.currentView = 'personal';
+    this.currentRoom = null;
+    this.buddies = [];
+    this.roomInterval = null;
+    this.buddyMessages = [];
+
+    this.rooms = [
+      { id: 'library', name: '静谧图书馆', icon: '📚', theme: 'linear-gradient(135deg,#667eea,#764ba2)', desc: '安静专注，适合深度学习' },
+      { id: 'cafe', name: '温馨咖啡厅', icon: '☕', theme: 'linear-gradient(135deg,#f093fb,#f5576c)', desc: '轻松氛围，适合创造性工作' },
+      { id: 'forest', name: '清晨森林', icon: '🌲', theme: 'linear-gradient(135deg,#4facfe,#00f2fe)', desc: '自然清新，适合阅读和思考' },
+      { id: 'night', name: '深夜自习室', icon: '🌙', theme: 'linear-gradient(135deg,#434343,#000000)', desc: '夜深人静，适合冲刺备考' },
+    ];
+
+    this.buddyNames = ['小明','阿杰','悦悦','思涵','凯文','雨桐','浩然','欣怡','子轩','梦瑶','博文','佳琪'];
+    this.buddyTasks = ['背单词','写论文','刷leetcode','看网课','读文献','练听力','写作文','复习数学','做项目','学英语','看书','整理笔记'];
+    this.buddyEmojis = ['😊','🤓','😎','🧐','😌','🙂','😺','🐶','🐱','🦊','🐼','🐨'];
+
+    this.$ = (sel) => document.querySelector(sel);
+    this.$$ = (sel) => document.querySelectorAll(sel);
+
+    this.init();
+  }
+
+  _freshStats() {
+    return { date: new Date().toDateString(), focusCount: 0, totalFocusMin: 0, completedTasks: 0 };
+  }
+
+  init() {
+    this.load();
+    this.cacheDom();
+    this.bindEvents();
+    this.applyMode();
+    this.renderTasks();
+    this.renderStats();
+    this.updateTimerDisplay();
+    this.updateDocTitle();
+    this.renderRoomList();
+    this.applyView();
+    if (this.settings.notificationEnabled) this.requestNotify();
+  }
+
+  cacheDom() {
+    this.el = {
+      timerTime: this.$('#timerTime'),
+      timerLabel: this.$('#timerLabel'),
+      timerCurrentTask: this.$('#timerCurrentTask'),
+      timerCenter: this.$('#timerCenter'),
+      ringProgress: this.$('#ringProgress'),
+      startBtn: this.$('#startBtn'),
+      skipBtn: this.$('#skipBtn'),
+      modeTabs: this.$$('.mode-tab'),
+      taskInput: this.$('#taskInput'),
+      taskList: this.$('#taskList'),
+      taskCount: this.$('#taskCount'),
+      statFocus: this.$('#statFocus'),
+      statTime: this.$('#statTime'),
+      statTasks: this.$('#statTasks'),
+      settingsModal: this.$('#settingsModal'),
+      darkToggle: this.$('#darkToggle'),
+      viewTabs: this.$$('.view-tab'),
+      personalView: this.$('#personalView'),
+      studyRoomView: this.$('#studyRoomView'),
+      roomList: this.$('#roomList'),
+      roomListPanel: this.$('#roomListPanel'),
+      roomDetailPanel: this.$('#roomDetailPanel'),
+      roomDetailIcon: this.$('#roomDetailIcon'),
+      roomDetailName: this.$('#roomDetailName'),
+      roomDetailCount: this.$('#roomDetailCount'),
+      buddyGrid: this.$('#buddyGrid'),
+      leaderboardList: this.$('#leaderboardList'),
+      roomMessage: this.$('#roomMessage'),
+      leaveRoomBtn: this.$('#leaveRoomBtn'),
+      syncRoomBtn: this.$('#syncRoomBtn'),
+    };
+
+    this.ringCircumference = 2 * Math.PI * 120;
+    this.el.ringProgress.style.strokeDasharray = this.ringCircumference;
+  }
+
+  bindEvents() {
+    // View tabs
+    this.el.viewTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.switchView(tab.dataset.view);
+      });
+    });
+
+    // Mode tabs
+    this.el.modeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (this.timerRunning) {
+          if (!confirm('切换模式将重置当前计时，确定吗？')) return;
+          this.stopTimer();
+        }
+        this.mode = tab.dataset.mode;
+        this.applyMode();
+      });
+    });
+
+    // Start / Pause
+    this.el.startBtn.addEventListener('click', () => {
+      if (this.timerRunning) {
+        this.pauseTimer();
+      } else {
+        this.startTimer();
+      }
+    });
+
+    // Skip break
+    this.el.skipBtn.addEventListener('click', () => this.skipBreak());
+
+    // Add task
+    this.el.taskInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') this.addTask();
+    });
+    this.$('#addTaskBtn').addEventListener('click', () => this.addTask());
+
+    // Settings
+    this.$('#settingsBtn').addEventListener('click', () => this.openSettings());
+    this.$('#closeSettings').addEventListener('click', () => this.closeSettings());
+    this.$('#saveSettings').addEventListener('click', () => this.saveSettings());
+    this.el.settingsModal.addEventListener('click', e => {
+      if (e.target === this.el.settingsModal) this.closeSettings();
+    });
+
+    // Dark mode
+    this.el.darkToggle.addEventListener('click', () => this.toggleDark());
+
+    // Toggle switches
+    this.$('#soundToggle').addEventListener('click', function() {
+      this.classList.toggle('on');
+    });
+    this.$('#notifyToggle').addEventListener('click', function() {
+      this.classList.toggle('on');
+    });
+
+    // Study Room
+    this.el.leaveRoomBtn.addEventListener('click', () => this.leaveRoom());
+    this.el.syncRoomBtn.addEventListener('click', () => this.syncRoomTimer());
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.code === 'Space') { e.preventDefault(); this.el.startBtn.click(); }
+    });
+  }
+
+  // ─── View Switching ───────────────────────────
+
+  switchView(view) {
+    this.currentView = view;
+    this.el.viewTabs.forEach(t => t.classList.toggle('active', t.dataset.view === view));
+    this.applyView();
+  }
+
+  applyView() {
+    if (this.currentView === 'personal') {
+      this.el.personalView.style.display = 'block';
+      this.el.studyRoomView.style.display = 'none';
+    } else {
+      this.el.personalView.style.display = 'none';
+      this.el.studyRoomView.style.display = 'block';
+      if (this.currentRoom) {
+        this.el.roomListPanel.style.display = 'none';
+        this.el.roomDetailPanel.style.display = 'block';
+      } else {
+        this.el.roomListPanel.style.display = 'block';
+        this.el.roomDetailPanel.style.display = 'none';
+        this.renderRoomList();
+      }
+    }
+  }
+
+  // ─── Study Room ───────────────────────────────
+
+  renderRoomList() {
+    this.el.roomList.innerHTML = this.rooms.map(r => {
+      const online = this._roomOnlineCount(r.id);
+      return `
+        <div class="room-card" data-room="${r.id}">
+          <div class="room-icon">${r.icon}</div>
+          <div class="room-name">${r.name}</div>
+          <div class="room-meta">${online} 人在线 · ${r.desc}</div>
+          <button class="room-btn" data-room="${r.id}">进入自习</button>
+        </div>
+      `;
+    }).join('');
+
+    this.el.roomList.querySelectorAll('.room-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.joinRoom(btn.dataset.room);
+      });
+    });
+    this.el.roomList.querySelectorAll('.room-card').forEach(card => {
+      card.addEventListener('click', () => this.joinRoom(card.dataset.room));
+    });
+  }
+
+  _roomOnlineCount(roomId) {
+    const base = { library: 24, cafe: 18, forest: 12, night: 31 };
+    const baseCount = base[roomId] || 10;
+    return baseCount + Math.floor(Math.random() * 8) - 4;
+  }
+
+  joinRoom(roomId) {
+    const room = this.rooms.find(r => r.id === roomId);
+    if (!room) return;
+    this.currentRoom = room;
+    this.generateBuddies();
+    this.el.roomListPanel.style.display = 'none';
+    this.el.roomDetailPanel.style.display = 'block';
+    this.renderRoomDetail();
+    this.startRoomSimulation();
+    this.showToast(`🎉 欢迎来到${room.name}！`);
+  }
+
+  leaveRoom() {
+    this.currentRoom = null;
+    this.buddies = [];
+    this.stopRoomSimulation();
+    this.el.roomDetailPanel.style.display = 'none';
+    this.el.roomListPanel.style.display = 'block';
+    this.renderRoomList();
+  }
+
+  generateBuddies() {
+    const count = 5 + Math.floor(Math.random() * 4); // 5-8 buddies
+    const shuffledNames = this._shuffle([...this.buddyNames]).slice(0, count);
+    const shuffledTasks = this._shuffle([...this.buddyTasks]).slice(0, count);
+    const shuffledEmojis = this._shuffle([...this.buddyEmojis]).slice(0, count);
+
+    this.buddies = shuffledNames.map((name, i) => {
+      const isFocus = Math.random() > 0.3;
+      const duration = isFocus ? this.settings.focusDuration : (Math.random() > 0.5 ? this.settings.shortBreakDuration : this.settings.longBreakDuration);
+      const total = duration * 60;
+      const elapsed = Math.floor(Math.random() * total * 0.8);
+      return {
+        id: 'buddy-' + i,
+        name,
+        emoji: shuffledEmojis[i],
+        task: shuffledTasks[i],
+        isFocus,
+        timeLeft: total - elapsed,
+        totalTime: total,
+        pomosToday: Math.floor(Math.random() * 8) + 1,
+        encouraged: false,
+        message: '',
+      };
+    });
+  }
+
+  renderRoomDetail() {
+    const room = this.currentRoom;
+    this.el.roomDetailIcon.textContent = room.icon;
+    this.el.roomDetailName.textContent = room.name;
+    this.el.roomDetailCount.textContent = `${this.buddies.length + 1} 人在线`;
+    this.renderBuddies();
+    this.renderLeaderboard();
+  }
+
+  renderBuddies() {
+    const meTask = this.currentTaskId ? (this.tasks.find(t => t.id === this.currentTaskId)?.name || '准备专注') : (this.tasks.find(t => !t.done)?.name || '准备专注');
+    const meTime = this.timerRunning ? this.timeLeft : (this.mode === 'focus' ? this.settings.focusDuration * 60 : this.timeLeft);
+    const meIsFocus = this.mode === 'focus';
+
+    let html = `
+      <div class="buddy-card me">
+        <div class="buddy-avatar" style="background:${this.currentRoom.theme}">我</div>
+        <div class="buddy-name">我 (你)</div>
+        <div class="buddy-task">${meTask}</div>
+        <div class="buddy-timer ${meIsFocus ? '' : 'rest'}">${this._fmtTime(meTime)}</div>
+        <div class="buddy-status">${this.timerRunning ? (meIsFocus ? '专注中 🔥' : '休息中 ☕') : '准备中'}</div>
+      </div>
+    `;
+
+    html += this.buddies.map(b => `
+      <div class="buddy-card" data-buddy="${b.id}">
+        <div class="buddy-avatar">${b.emoji}</div>
+        <div class="buddy-name">${b.name}</div>
+        <div class="buddy-task">${b.task}</div>
+        <div class="buddy-timer ${b.isFocus ? '' : 'rest'}">${this._fmtTime(b.timeLeft)}</div>
+        <div class="buddy-status">${b.isFocus ? '专注中 🔥' : '休息中 ☕'}</div>
+        ${b.message ? `<div class="chat-bubble">${b.message}</div>` : ''}
+        <div class="buddy-actions">
+          <button title="加油" data-action="cheer">👏</button>
+          <button title="点赞" data-action="like">❤️</button>
+        </div>
+      </div>
+    `).join('');
+
+    this.el.buddyGrid.innerHTML = html;
+
+    this.el.buddyGrid.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const card = e.target.closest('.buddy-card');
+        const buddyId = card?.dataset.buddy;
+        if (buddyId) this.interactBuddy(buddyId, btn.dataset.action);
+      });
+    });
+  }
+
+  interactBuddy(buddyId, action) {
+    const buddy = this.buddies.find(b => b.id === buddyId);
+    if (!buddy) return;
+    if (action === 'cheer') {
+      buddy.message = '谢谢加油！💪';
+      this.showToast(`你为佳${buddy.name}加油了！`);
+    } else {
+      buddy.message = '收到鼓励！❤️';
+      this.showToast(`你为佳${buddy.name}点了赞！`);
+    }
+    setTimeout(() => { buddy.message = ''; this.renderBuddies(); }, 3000);
+    this.renderBuddies();
+  }
+
+  renderLeaderboard() {
+    const all = [
+      { name: '我', time: this.todayStats.totalFocusMin, me: true },
+      ...this.buddies.map(b => ({ name: b.name, time: b.pomosToday * this.settings.focusDuration + Math.floor(Math.random() * 15), me: false }))
+    ];
+    all.sort((a, b) => b.time - a.time);
+
+    this.el.leaderboardList.innerHTML = all.slice(0, 6).map((p, i) => {
+      const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      return `
+        <div class="leaderboard-row">
+          <div class="leaderboard-rank ${rankClass}">${i + 1}</div>
+          <div class="leaderboard-name" style="${p.me ? 'color:var(--primary);font-weight:700' : ''}">${p.me ? '👤 ' : ''}${p.name}</div>
+          <div class="leaderboard-time">${p.time}min</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  startRoomSimulation() {
+    this.stopRoomSimulation();
+    this.roomInterval = setInterval(() => {
+      this.updateBuddies();
+      if (Math.random() < 0.08) this.randomRoomEvent();
+    }, 2000);
+  }
+
+  stopRoomSimulation() {
+    if (this.roomInterval) { clearInterval(this.roomInterval); this.roomInterval = null; }
+  }
+
+  updateBuddies() {
+    this.buddies.forEach(b => {
+      b.timeLeft = Math.max(0, b.timeLeft - 2);
+      if (b.timeLeft <= 0) {
+        // Switch mode
+        b.isFocus = !b.isFocus;
+        const duration = b.isFocus ? this.settings.focusDuration : (Math.random() > 0.7 ? this.settings.longBreakDuration : this.settings.shortBreakDuration);
+        b.totalTime = duration * 60;
+        b.timeLeft = b.totalTime;
+        if (b.isFocus) b.pomosToday++;
+      }
+    });
+    this.renderBuddies();
+    this.renderLeaderboard();
+  }
+
+  randomRoomEvent() {
+    const events = [
+      '小明完成了第3个番茄钟！🎉',
+      '阿杰刚刚加入自习室',
+      '悦悦已经专注2小时了，太强了！',
+      '深夜自习室的氛围很安静',
+      '浩然开始了一项新任务',
+      '雨桐完成了今日目标！',
+      '和伙伴们一起专注，效率倍增！',
+    ];
+    const evt = events[Math.floor(Math.random() * events.length)];
+    this.el.roomMessage.textContent = evt;
+  }
+
+  syncRoomTimer() {
+    if (!this.currentRoom) return;
+    this.showToast('⏱ 计时已同步到自习室');
+    this.renderRoomDetail();
+  }
+
+  _fmtTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  _shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ─── Timer ────────────────────────────────────
+
+  startTimer() {
+    if (this.mode === 'focus' && !this.currentTaskId && this.tasks.length > 0) {
+      const active = this.tasks.find(t => !t.done);
+      if (active) this.selectTask(active.id);
+    }
+
+    this.timerRunning = true;
+    this.startTimestamp = Date.now();
+    this.timeAtStart = this.timeLeft;
+
+    this.el.startBtn.innerHTML = '⏸ 暂停';
+    this.el.startBtn.style.background = '#636e72';
+    this.el.startBtn.style.boxShadow = '0 4px 14px rgba(0,0,0,0.15)';
+    this.el.skipBtn.style.display = 'flex';
+    this.el.timerLabel.textContent = this.mode === 'focus' ? '专注中...' : '休息中...';
+
+    this.intervalId = setInterval(() => this.tick(), 200);
+    this.save();
+  }
+
+  pauseTimer() {
+    this.timerRunning = false;
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+
+    this.el.startBtn.innerHTML = '▶ 继续';
+    this.el.startBtn.style.background = '';
+    this.el.startBtn.style.boxShadow = '';
+    this.el.timerLabel.textContent = '已暂停';
+    this.save();
+  }
+
+  stopTimer() {
+    this.timerRunning = false;
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+    this.el.startBtn.innerHTML = this.mode === 'focus' ? '▶ 开始专注' : '▶ 开始休息';
+    this.el.startBtn.style.background = '';
+    this.el.startBtn.style.boxShadow = '';
+    this.el.skipBtn.style.display = 'none';
+    this.el.timerLabel.textContent = '准备开始';
+    this.el.timerCenter.classList.remove('ending');
+    this.el.ringProgress.classList.remove('ending', 'short-mode', 'long-mode');
+    this.save();
+  }
+
+  tick() {
+    if (!this.timerRunning) return;
+
+    const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
+    this.timeLeft = Math.max(0, this.timeAtStart - elapsed);
+    this.updateTimerDisplay();
+    this.updateDocTitle();
+    this.save();
+
+    // Ending pulse
+    if (this.timeLeft <= 10 && this.timeLeft > 0 && this.mode === 'focus') {
+      this.el.timerCenter.classList.add('ending');
+      this.el.ringProgress.classList.add('ending');
+    }
+
+    if (this.timeLeft <= 0) {
+      this.completeSession();
+    }
+  }
+
+  completeSession() {
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+    this.timerRunning = false;
+    this.el.timerCenter.classList.remove('ending');
+    this.el.ringProgress.classList.remove('ending');
+    this.el.startBtn.style.background = '';
+    this.el.startBtn.style.boxShadow = '';
+
+    if (this.settings.soundEnabled) this.playCompleteSound();
+    if (this.settings.notificationEnabled) this.showCompleteNotify();
+
+    if (this.mode === 'focus') {
+      this.consecutiveFocus++;
+      this.todayStats.focusCount++;
+      this.todayStats.totalFocusMin += this.settings.focusDuration;
+
+      // Increment current task's pomodoro count
+      if (this.currentTaskId) {
+        const task = this.tasks.find(t => t.id === this.currentTaskId);
+        if (task) {
+          task.pomos = (task.pomos || 0) + 1;
+        }
+      }
+
+      this.showToast('🎉 专注完成！太棒了！');
+      this.renderTasks();
+      this.renderStats();
+
+      // Auto-switch to break
+      const needLong = this.consecutiveFocus % this.settings.longBreakInterval === 0;
+      this.mode = needLong ? 'longBreak' : 'shortBreak';
+      this.timeLeft = needLong ? this.settings.longBreakDuration * 60 : this.settings.shortBreakDuration * 60;
+      this.totalTime = this.timeLeft;
+      this.applyMode();
+      this.updateTimerDisplay();
+      this.updateDocTitle();
+      this.renderTasks();
+      this.save();
+
+      // Auto-start break after 2s
+      setTimeout(() => {
+        if (!this.timerRunning) this.startTimer();
+      }, 2000);
+
+    } else {
+      this.showToast(this.mode === 'longBreak' ? '🌿 长休结束，准备下一个专注吧' : '☕ 短休结束，继续加油');
+      // Switch back to focus
+      this.mode = 'focus';
+      this.timeLeft = this.settings.focusDuration * 60;
+      this.totalTime = this.timeLeft;
+      this.applyMode();
+      this.stopTimer();
+      this.updateTimerDisplay();
+      this.updateDocTitle();
+      this.save();
+    }
+  }
+
+  skipBreak() {
+    if (this.mode === 'focus') return;
+    this.stopTimer();
+    this.mode = 'focus';
+    this.timeLeft = this.settings.focusDuration * 60;
+    this.totalTime = this.timeLeft;
+    this.applyMode();
+    this.updateTimerDisplay();
+    this.updateDocTitle();
+    this.save();
+  }
+
+  applyMode() {
+    this.el.modeTabs.forEach(t => {
+      t.classList.remove('active', 'short-active', 'long-active');
+      if (t.dataset.mode === this.mode) {
+        if (this.mode === 'shortBreak') t.classList.add('short-active');
+        else if (this.mode === 'longBreak') t.classList.add('long-active');
+        else t.classList.add('active');
+      }
+    });
+
+    this.el.ringProgress.classList.remove('short-mode', 'long-mode', 'ending');
+    if (this.mode === 'shortBreak') this.el.ringProgress.classList.add('short-mode');
+    if (this.mode === 'longBreak') this.el.ringProgress.classList.add('long-mode');
+
+    this.el.timerCenter.classList.remove('ending');
+
+    if (!this.timerRunning) {
+      this.el.timerLabel.textContent = '准备开始';
+      this.el.startBtn.innerHTML = this.mode === 'focus' ? '▶ 开始专注' : '▶ 开始休息';
+    }
+    this.el.skipBtn.style.display = this.mode !== 'focus' && this.timerRunning ? 'flex' : 'none';
+
+    const durations = { focus: this.settings.focusDuration, shortBreak: this.settings.shortBreakDuration, longBreak: this.settings.longBreakDuration };
+    if (!this.timerRunning) {
+      this.timeLeft = durations[this.mode] * 60;
+      this.totalTime = this.timeLeft;
+    }
+    this.updateTimerDisplay();
+    this.updateTimerCurrentTask();
+  }
+
+  updateTimerDisplay() {
+    const m = Math.floor(this.timeLeft / 60);
+    const s = this.timeLeft % 60;
+    this.el.timerTime.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+    const progress = this.totalTime > 0 ? this.timeLeft / this.totalTime : 0;
+    this.el.ringProgress.style.strokeDashoffset = this.ringCircumference * (1 - progress);
+  }
+
+  updateTimerCurrentTask() {
+    if (this.mode === 'focus' && this.currentTaskId) {
+      const task = this.tasks.find(t => t.id === this.currentTaskId);
+      this.el.timerCurrentTask.textContent = task ? `📌 ${task.name}` : '';
+    } else {
+      this.el.timerCurrentTask.textContent = '';
+    }
+  }
+
+  updateDocTitle() {
+    if (this.timerRunning) {
+      const m = Math.floor(this.timeLeft / 60);
+      const s = this.timeLeft % 60;
+      const labels = { focus: '专注', shortBreak: '短休', longBreak: '长休' };
+      document.title = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} - ${labels[this.mode]}中`;
+    } else {
+      document.title = '🍅 番茄Todo';
+    }
+  }
+
+  // ─── Tasks ────────────────────────────────────
+
+  addTask() {
+    const name = this.el.taskInput.value.trim();
+    if (!name) return;
+    if (this.tasks.some(t => t.name === name)) {
+      this.showToast('任务已存在');
+      return;
+    }
+
+    this.tasks.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name,
+      pomos: 0,
+      done: false,
+      createdAt: Date.now(),
+    });
+
+    this.el.taskInput.value = '';
+    this.renderTasks();
+    this.save();
+  }
+
+  toggleTask(id) {
+    const task = this.tasks.find(t => t.id === id);
+    if (!task) return;
+    task.done = !task.done;
+    if (task.done) {
+      this.todayStats.completedTasks++;
+      if (this.currentTaskId === id) this.currentTaskId = null;
+    } else {
+      this.todayStats.completedTasks = Math.max(0, this.todayStats.completedTasks - 1);
+    }
+    this.renderTasks();
+    this.renderStats();
+    this.updateTimerCurrentTask();
+    this.save();
+  }
+
+  deleteTask(id) {
+    if (this.currentTaskId === id) this.currentTaskId = null;
+    const task = this.tasks.find(t => t.id === id);
+    if (task && task.done) {
+      this.todayStats.completedTasks = Math.max(0, this.todayStats.completedTasks - 1);
+    }
+    this.tasks = this.tasks.filter(t => t.id !== id);
+    this.renderTasks();
+    this.renderStats();
+    this.updateTimerCurrentTask();
+    this.save();
+  }
+
+  selectTask(id) {
+    if (this.timerRunning && this.mode === 'focus') return;
+    this.currentTaskId = this.currentTaskId === id ? null : id;
+    this.renderTasks();
+    this.updateTimerCurrentTask();
+    this.save();
+  }
+
+  renderTasks() {
+    if (this.tasks.length === 0) {
+      this.el.taskList.innerHTML = '<div class="empty-state">还没有任务，添加一个吧 ✨</div>';
+      this.el.taskCount.textContent = '0 个任务';
+      return;
+    }
+
+    const active = this.tasks.filter(t => !t.done).length;
+    this.el.taskCount.textContent = `${active} 个进行中 / ${this.tasks.length} 总计`;
+
+    this.el.taskList.innerHTML = this.tasks.map(t => `
+      <div class="task-item${this.currentTaskId === t.id ? ' selected' : ''}" data-id="${t.id}">
+        <div class="task-check${t.done ? ' done' : ''}" data-action="toggle">${t.done ? '✓' : ''}</div>
+        <span class="task-name${t.done ? ' done' : ''}" data-action="select">${this._esc(t.name)}</span>
+        ${t.pomos > 0 ? `<span class="pomo-counter">🍅 × ${t.pomos}</span>` : ''}
+        <button class="task-delete" data-action="delete">×</button>
+      </div>
+    `).join('');
+
+    // Bind events via delegation
+    this.el.taskList.querySelectorAll('.task-item').forEach(el => {
+      el.addEventListener('click', e => {
+        const action = e.target.dataset.action;
+        const id = el.dataset.id;
+        if (action === 'toggle') this.toggleTask(id);
+        else if (action === 'delete') this.deleteTask(id);
+        else if (action === 'select' || e.target === el || e.target.classList.contains('task-name')) {
+          this.selectTask(id);
+        }
+      });
+    });
+  }
+
+  // ─── Stats ────────────────────────────────────
+
+  renderStats() {
+    this.el.statFocus.textContent = this.todayStats.focusCount;
+    this.el.statTime.textContent = this.todayStats.totalFocusMin + 'min';
+    this.el.statTasks.textContent = this.todayStats.completedTasks;
+  }
+
+  // ─── Settings ─────────────────────────────────
+
+  openSettings() {
+    this.$('#focusDuration').value = this.settings.focusDuration;
+    this.$('#shortBreakDuration').value = this.settings.shortBreakDuration;
+    this.$('#longBreakDuration').value = this.settings.longBreakDuration;
+    this.$('#longBreakInterval').value = this.settings.longBreakInterval;
+    this.$('#soundToggle').classList.toggle('on', this.settings.soundEnabled);
+    this.$('#notifyToggle').classList.toggle('on', this.settings.notificationEnabled);
+    this.el.settingsModal.classList.remove('hidden');
+  }
+
+  closeSettings() {
+    this.el.settingsModal.classList.add('hidden');
+  }
+
+  saveSettings() {
+    const focusDuration = parseInt(this.$('#focusDuration').value) || 25;
+    const shortBreakDuration = parseInt(this.$('#shortBreakDuration').value) || 5;
+    const longBreakDuration = parseInt(this.$('#longBreakDuration').value) || 15;
+    const longBreakInterval = parseInt(this.$('#longBreakInterval').value) || 4;
+    const soundEnabled = this.$('#soundToggle').classList.contains('on');
+    const notificationEnabled = this.$('#notifyToggle').classList.contains('on');
+
+    const changed = focusDuration !== this.settings.focusDuration
+      || shortBreakDuration !== this.settings.shortBreakDuration
+      || longBreakDuration !== this.settings.longBreakDuration;
+
+    this.settings.focusDuration = Math.max(1, Math.min(120, focusDuration));
+    this.settings.shortBreakDuration = Math.max(1, Math.min(60, shortBreakDuration));
+    this.settings.longBreakDuration = Math.max(1, Math.min(120, longBreakDuration));
+    this.settings.longBreakInterval = Math.max(2, Math.min(10, longBreakInterval));
+    this.settings.soundEnabled = soundEnabled;
+    this.settings.notificationEnabled = notificationEnabled;
+
+    if (changed && !this.timerRunning) {
+      const durations = { focus: this.settings.focusDuration, shortBreak: this.settings.shortBreakDuration, longBreak: this.settings.longBreakDuration };
+      this.timeLeft = durations[this.mode] * 60;
+      this.totalTime = this.timeLeft;
+      this.updateTimerDisplay();
+    }
+
+    this.closeSettings();
+    this.save();
+    this.showToast('✅ 设置已保存');
+    if (this.settings.notificationEnabled) this.requestNotify();
+  }
+
+  // ─── Dark Mode ────────────────────────────────
+
+  toggleDark() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? '' : 'dark');
+    this.el.darkToggle.textContent = isDark ? '🌙' : '☀️';
+    localStorage.setItem('pomodoro-theme', isDark ? '' : 'dark');
+  }
+
+  applyTheme() {
+    const theme = localStorage.getItem('pomodoro-theme');
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      this.el.darkToggle.textContent = '☀️';
+    }
+  }
+
+  // ─── Sound ────────────────────────────────────
+
+  playCompleteSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [660, 880, 1100].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.25);
+        osc.start(ctx.currentTime + i * 0.15);
+        osc.stop(ctx.currentTime + i * 0.15 + 0.25);
+      });
+    } catch(e) { /* audio not available */ }
+  }
+
+  // ─── Notifications ────────────────────────────
+
+  async requestNotify() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }
+
+  showCompleteNotify() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (this.mode === 'focus') {
+      new Notification('🍅 专注完成！', { body: '太棒了，休息一下吧～', icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🍅</text></svg>', silent: true });
+    } else {
+      new Notification('⏰ 休息结束', { body: '准备开始新的专注吧！', silent: true });
+    }
+  }
+
+  // ─── Toast ────────────────────────────────────
+
+  showToast(msg) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  // ─── Persistence ──────────────────────────────
+
+  save() {
+    const data = {
+      tasks: this.tasks,
+      settings: this.settings,
+      todayStats: this.todayStats,
+      mode: this.mode,
+      currentTaskId: this.currentTaskId,
+      consecutiveFocus: this.consecutiveFocus,
+      timerRunning: this.timerRunning,
+      timeLeft: this.timeLeft,
+      totalTime: this.totalTime,
+      startTimestamp: this.startTimestamp,
+      timeAtStart: this.timeAtStart,
+    };
+    try { localStorage.setItem('pomodoro-todo', JSON.stringify(data)); } catch(e) {}
+  }
+
+  load() {
+    this.applyTheme();
+
+    // Check today
+    const today = new Date().toDateString();
+    if (this.todayStats.date !== today) {
+      this.todayStats = this._freshStats();
+    }
+
+    try {
+      const raw = localStorage.getItem('pomodoro-todo');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+
+      this.tasks = data.tasks || [];
+      if (data.settings) Object.assign(this.settings, data.settings);
+      this.currentTaskId = data.currentTaskId || null;
+      this.consecutiveFocus = data.consecutiveFocus || 0;
+      this.mode = data.mode || 'focus';
+      this.totalTime = data.totalTime || this.settings.focusDuration * 60;
+
+      if (data.todayStats && data.todayStats.date === today) {
+        this.todayStats = data.todayStats;
+      }
+
+      // Resume timer?
+      if (data.timerRunning && data.startTimestamp) {
+        const elapsed = Math.floor((Date.now() - data.startTimestamp) / 1000);
+        const remaining = (data.timeAtStart || data.timeLeft) - elapsed;
+        if (remaining > 0) {
+          this.timeLeft = remaining;
+          this.totalTime = data.totalTime;
+          // Don't auto-start, let user decide. But set the correct time.
+        } else {
+          // Timer finished while away
+          this.timeLeft = 0;
+          if (data.mode === 'focus') {
+            this.consecutiveFocus = data.consecutiveFocus || 0;
+            this.todayStats = data.todayStats || this._freshStats();
+          }
+          // Don't auto-complete; just reset to initial state
+          const durations = { focus: this.settings.focusDuration, shortBreak: this.settings.shortBreakDuration, longBreak: this.settings.longBreakDuration };
+          this.timeLeft = durations[this.mode] * 60;
+        }
+      } else {
+        const durations = { focus: this.settings.focusDuration, shortBreak: this.settings.shortBreakDuration, longBreak: this.settings.longBreakDuration };
+        this.timeLeft = durations[this.mode] * 60;
+      }
+
+      this.totalTime = this.timeLeft;
+    } catch(e) {
+      const durations = { focus: this.settings.focusDuration, shortBreak: this.settings.shortBreakDuration, longBreak: this.settings.longBreakDuration };
+      this.timeLeft = durations[this.mode] * 60;
+      this.totalTime = this.timeLeft;
+    }
+  }
+
+  _esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+}
+
+// Boot
+document.addEventListener('DOMContentLoaded', () => {
+  window.app = new PomodoroApp();
+});
+</script>
+
+</body>
+</html>

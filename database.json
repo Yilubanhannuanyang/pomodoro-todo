@@ -1,0 +1,262 @@
+{
+  "users": [
+    {
+      "username": "test",
+      "password_hash": "$2a$10$HcDPRNMI4sX82TedRsKA2.sGKLfUezJBaQH.q/iNtKACCmufhrVl6",
+      "nickname": "测试用户",
+      "avatar": "😊",
+      "created_at": "2026-05-09 09:28:28",
+      "id": 1
+    },
+    {
+      "username": "123",
+      "password_hash": "$2a$10$t5JaeNrjSZsWFX21gSlXS.XchMJYgieNGmh7R2dqwizgqMANTbNhO",
+      "nickname": "111",
+      "avatar": "😊",
+      "created_at": "2026-05-09 10:19:38",
+      "id": 2
+    },
+    {
+      "username": "1234",
+      "password_hash": "$2a$10$qAV9FjXIha7HUU86gNtAGupWkt74s0nueM0nU2UxQMAIqggIyjrIS",
+      "nickname": "123",
+      "avatar": "🐶",
+      "created_at": "2026-05-09 11:58:26",
+      "id": 9
+    },
+    {
+      "username": "jiangjunbao",
+      "password_hash": "$2a$10$hTGGNLSXC5Uq4revS5nZDOUGzAmh8BS9nV7w7XUkDf0GfQTUbG2u2",
+      "nickname": "xiaoxiao",
+      "avatar": "🤓",
+      "created_at": "2026-05-09 11:59:35",
+      "id": 10
+    },
+    {
+      "username": "123321",
+      "password_hash": "$2a$10$VtNBUmBSp33ht5RuUcxnWe8KOh2yXDMgivbNQWAkvkViG9lMvUxqO",
+      "nickname": "帅哥",
+      "avatar": "😎",
+      "created_at": "2026-05-09 15:23:23",
+      "id": 22
+    },
+    {
+      "username": "testuser",
+      "password_hash": "$2a$10$/Ny2TLrLOIe8U1UhmmAYd.yCahyV7G5j62K8.YmepEwxYMCDusnFe",
+      "nickname": "�����û�",
+      "avatar": "😊",
+      "created_at": "2026-05-12 05:53:35",
+      "id": 26
+    }
+  ],
+  "rooms": [
+    {
+      "code": "KLPS58",
+      "name": "静谧图书馆",
+      "theme": "library",
+      "created_by": 2,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 10:19:46",
+      "id": 3
+    },
+    {
+      "code": "NMCMFR",
+      "name": "清晨森林",
+      "theme": "forest",
+      "created_by": 2,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 11:55:57",
+      "id": 5
+    },
+    {
+      "code": "AA3CX5",
+      "name": "静谧图书馆",
+      "theme": "library",
+      "created_by": 2,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 11:56:27",
+      "id": 7
+    },
+    {
+      "code": "GM854E",
+      "name": "静谧图书馆",
+      "theme": "library",
+      "created_by": 10,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 11:59:41",
+      "id": 11
+    },
+    {
+      "code": "YCVRAG",
+      "name": "静谧图书馆",
+      "theme": "library",
+      "created_by": 10,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 11:59:41",
+      "id": 12
+    },
+    {
+      "code": "LMX5L5",
+      "name": "静谧图书馆",
+      "theme": "library",
+      "created_by": 9,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 11:59:58",
+      "id": 13
+    },
+    {
+      "code": "WLDLG5",
+      "name": "静谧图书馆",
+      "theme": "library",
+      "created_by": 9,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 12:00:46",
+      "id": 15
+    },
+    {
+      "code": "R56WWD",
+      "name": "静谧图书馆",
+      "theme": "library",
+      "created_by": 9,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 14:57:51",
+      "id": 17
+    },
+    {
+      "code": "BR62UA",
+      "name": "深夜自习室",
+      "theme": "night",
+      "created_by": 22,
+      "max_members": 20,
+      "is_public": 1,
+      "announcement": "",
+      "created_at": "2026-05-09 15:25:13",
+      "id": 23
+    }
+  ],
+  "room_members": [
+    {
+      "room_id": 3,
+      "user_id": 2,
+      "joined_at": "2026-05-09 10:19:46",
+      "last_seen_at": "2026-05-09 11:55:41",
+      "status": "idle",
+      "time_left": 1498,
+      "total_time": 1500,
+      "today_focus_min": 0,
+      "current_task": "",
+      "goal": "",
+      "encouraged_count": 0,
+      "id": 4
+    },
+    {
+      "room_id": 5,
+      "user_id": 2,
+      "joined_at": "2026-05-09 11:55:57",
+      "last_seen_at": "2026-05-09 11:55:57",
+      "status": "idle",
+      "time_left": 1500,
+      "total_time": 1500,
+      "today_focus_min": 0,
+      "current_task": "",
+      "goal": "",
+      "encouraged_count": 0,
+      "id": 6
+    },
+    {
+      "room_id": 7,
+      "user_id": 2,
+      "joined_at": "2026-05-09 11:56:27",
+      "last_seen_at": "2026-05-09 11:56:27",
+      "status": "idle",
+      "time_left": 1500,
+      "total_time": 1500,
+      "today_focus_min": 0,
+      "current_task": "",
+      "goal": "",
+      "encouraged_count": 0,
+      "id": 8
+    },
+    {
+      "room_id": 17,
+      "user_id": 10,
+      "joined_at": "2026-05-09 14:58:47",
+      "last_seen_at": "2026-05-09 14:58:47",
+      "status": "idle",
+      "time_left": 0,
+      "total_time": 0,
+      "today_focus_min": 0,
+      "current_task": "",
+      "goal": "",
+      "encouraged_count": 0,
+      "id": 18
+    },
+    {
+      "room_id": 23,
+      "user_id": 22,
+      "joined_at": "2026-05-09 15:25:15",
+      "last_seen_at": "2026-05-09 15:25:15",
+      "status": "idle",
+      "time_left": 0,
+      "total_time": 0,
+      "today_focus_min": 0,
+      "current_task": "",
+      "goal": "",
+      "encouraged_count": 0,
+      "id": 24
+    }
+  ],
+  "tasks": [
+    {
+      "user_id": 10,
+      "name": "数学",
+      "done": 0,
+      "pomos": 0,
+      "created_at": "2026-05-09 15:00:13",
+      "date": "2026-05-09",
+      "id": 19,
+      "completed_at": "2026-05-09 15:00:16"
+    },
+    {
+      "user_id": 9,
+      "name": "高数",
+      "group_name": "数学",
+      "target_pomos": 4,
+      "done": 0,
+      "pomos": 0,
+      "created_at": "2026-05-09 15:16:44",
+      "date": "2026-05-09",
+      "id": 20
+    },
+    {
+      "user_id": 9,
+      "name": "线代",
+      "group_name": "数学",
+      "target_pomos": 4,
+      "done": 0,
+      "pomos": 0,
+      "created_at": "2026-05-09 15:17:01",
+      "date": "2026-05-09",
+      "id": 21
+    }
+  ],
+  "pomodoro_sessions": [],
+  "user_streaks": [],
+  "_next_id": 29
+}

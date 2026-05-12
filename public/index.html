@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>番茄Todo</title>
+<style>
+:root {
+  --primary: #e85d4a;
+  --primary-dark: #c0392b;
+  --primary-light: #fdefeb;
+  --bg: #fef6f5;
+  --card: #fff;
+  --text: #2d3436;
+  --text-secondary: #888;
+  --border: #f0e0e0;
+  --ring-bg: #f0e0e0;
+  --shadow: 0 2px 16px rgba(0,0,0,0.06);
+  --success: #00b894;
+  --purple: #6c5ce7;
+  --green: #00b894;
+  --blue: #3498db;
+}
+[data-theme="dark"] {
+  --primary: #f07060;
+  --primary-dark: #e85d4a;
+  --primary-light: #2a1a18;
+  --bg: #1a1a2e;
+  --card: #1e1e3a;
+  --text: #e0e0e0;
+  --text-secondary: #9090a0;
+  --border: #2a2a4a;
+  --ring-bg: #2a2a4a;
+  --shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  display:flex;justify-content:center;
+  transition:background .3s,color .3s;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.app{width:100%;max-width:420px;padding:12px 16px 40px}
+
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 4px;margin-bottom:4px;
+}
+.header h1{font-size:22px;font-weight:700;display:flex;align-items:center;gap:6px}
+.header h1 .logo{font-size:28px}
+.header-actions{display:flex;align-items:center;gap:8px}
+
+.user-badge{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card);border-radius:20px;padding:4px 12px 4px 4px;
+  box-shadow:var(--shadow);cursor:pointer;font-size:13px;font-weight:500;
+}
+.user-badge .avatar{font-size:22px}
+.user-badge .name{color:var(--text)}
+
+.icon-btn{
+  width:38px;height:38px;border:none;background:var(--card);
+  border-radius:12px;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);transition:transform .15s;color:var(--text);
+}
+.icon-btn:hover{transform:scale(1.06)}
+.icon-btn:active{transform:scale(.94)}
+
+/* View Tabs */
+.view-tabs{
+  display:flex;background:var(--bg);border-radius:12px;
+  padding:4px;margin-bottom:14px;gap:4px;
+}
+.view-tab{
+  flex:1;padding:10px 6px;border:none;background:transparent;
+  color:var(--text-secondary);border-radius:10px;cursor:pointer;
+  font-size:13.5px;font-weight:600;transition:all .2s;
+  font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.view-tab.active{background:var(--card);color:var(--primary);box-shadow:0 1px 6px rgba(0,0,0,.08)}
+
+/* Timer Card */
+.card{
+  background:var(--card);border-radius:20px;padding:22px 18px;
+  box-shadow:var(--shadow);margin-bottom:12px;transition:background .3s;
+}
+.mode-tabs{
+  display:flex;background:var(--bg);border-radius:12px;
+  padding:4px;margin-bottom:18px;gap:4px;
+}
+.mode-tab{
+  flex:1;padding:9px 6px;border:none;background:transparent;
+  color:var(--text-secondary);border-radius:10px;cursor:pointer;
+  font-size:12.5px;font-weight:500;transition:all .2s;
+  white-space:nowrap;font-family:inherit;
+}
+.mode-tab.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(232,93,74,.3)}
+.mode-tab.short-active{background:var(--green)}
+.mode-tab.long-active{background:var(--purple)}
+.mode-tab.stopwatch-active{background:var(--blue)}
+
+.timer-ring-wrap{position:relative;width:240px;height:240px;margin:0 auto 16px}
+.timer-ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--ring-bg);stroke-width:8}
+.ring-progress{
+  fill:none;stroke:var(--primary);stroke-width:8;
+  stroke-linecap:round;transition:stroke-dashoffset .5s linear,stroke .3s;
+}
+.ring-progress.short-mode{stroke:var(--green)}
+.ring-progress.long-mode{stroke:var(--purple)}
+.ring-progress.stopwatch-mode{stroke:var(--blue)}
+
+.timer-center{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);text-align:center;
+}
+.timer-time{
+  font-size:50px;font-weight:700;font-variant-numeric:tabular-nums;
+  letter-spacing:-2px;line-height:1;
+}
+.timer-label{font-size:13px;color:var(--text-secondary);margin-top:5px}
+.timer-current-task{
+  font-size:12px;color:var(--primary);margin-top:3px;
+  max-width:170px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-weight:500;
+}
+
+.timer-actions{display:flex;gap:10px;justify-content:center;align-items:center}
+.btn{
+  padding:11px 24px;border:none;border-radius:14px;
+  font-size:15px;font-weight:600;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;gap:5px;
+  font-family:inherit;
+}
+.btn:active{transform:scale(.95)}
+.btn-primary{
+  background:var(--primary);color:#fff;
+  box-shadow:0 4px 14px rgba(232,93,74,.35);
+  min-width:110px;justify-content:center;
+}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{
+  background:transparent;color:var(--text-secondary);
+  border:2px solid var(--border);padding:11px 20px;
+}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:8px;font-weight:500}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:16px;font-weight:600}
+.task-count{font-size:12px;color:var(--text-secondary)}
+
+.add-task-row{display:flex;gap:8px;margin-bottom:10px}
+.input{
+  flex:1;padding:10px 14px;border:2px solid var(--border);
+  border-radius:12px;font-size:14px;background:var(--bg);
+  color:var(--text);outline:none;transition:border .2s;font-family:inherit;
+}
+.input:focus{border-color:var(--primary)}
+.input::placeholder{color:#c0c0c0}
+
+.task-list{max-height:300px;overflow-y:auto}
+.task-item{
+  display:flex;align-items:center;padding:9px 4px;gap:10px;
+  border-radius:10px;cursor:pointer;transition:background .15s;
+}
+.task-item:hover{background:var(--bg)}
+.task-item.selected{background:var(--primary-light)}
+.task-check{
+  width:20px;height:20px;border:2px solid var(--border);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:#fff;flex-shrink:0;transition:all .2s;cursor:pointer;
+}
+.task-check.done{background:var(--success);border-color:var(--success)}
+.task-name{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task-name.done{text-decoration:line-through;color:var(--text-secondary)}
+.pomo-counter{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--primary);font-weight:600}
+.pomo-counter .dot{font-size:10px}
+.task-delete{
+  width:28px;height:28px;border:none;background:transparent;
+  color:var(--text-secondary);cursor:pointer;border-radius:6px;
+  font-size:16px;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:all .15s;flex-shrink:0;
+}
+.task-item:hover .task-delete{opacity:1}
+.task-delete:hover{background:#ffe0e0;color:var(--primary)}
+
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat-box{text-align:center;padding:14px 6px;background:var(--bg);border-radius:12px}
+.stat-value{font-size:22px;font-weight:700;color:var(--primary);line-height:1}
+.stat-label{font-size:11px;color:var(--text-secondary);margin-top:4px}
+
+/* Study Room */
+.room-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.room-card{
+  background:var(--card);border-radius:16px;padding:16px 12px;
+  box-shadow:var(--shadow);cursor:pointer;transition:all .2s;
+  text-align:center;border:2px solid transparent;
+}
+.room-card:hover{transform:translateY(-2px);border-color:var(--primary)}
+.room-card .room-icon{font-size:32px;margin-bottom:6px}
+.room-card .room-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.room-card .room-meta{font-size:11px;color:var(--text-secondary)}
+.room-card .room-btn{
+  margin-top:10px;padding:6px 14px;border:none;border-radius:8px;
+  background:var(--primary-light);color:var(--primary);font-size:12px;
+  font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;
+}
+.room-card .room-btn:hover{background:var(--primary);color:#fff}
+
+.room-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+}
+.room-header-left{display:flex;align-items:center;gap:10px}
+.room-header-icon{font-size:28px}
+.room-header-info{flex:1}
+.room-header-name{font-size:16px;font-weight:600}
+.room-header-count{font-size:12px;color:var(--text-secondary)}
+
+.share-code-box{
+  background:var(--primary-light);border-radius:12px;padding:12px;
+  text-align:center;margin-bottom:14px;border:2px dashed var(--primary);
+}
+.share-code-label{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+.share-code-value{
+  font-size:22px;font-weight:700;color:var(--primary);letter-spacing:4px;
+  font-family:'Courier New',monospace;
+}
+
+.join-room-row{display:flex;gap:8px;margin-bottom:14px}
+
+.buddy-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;
+}
+.buddy-card{
+  background:var(--bg);border-radius:14px;padding:12px 8px;text-align:center;
+  transition:all .2s;border:2px solid transparent;cursor:pointer;
+}
+.buddy-card:hover{transform:translateY(-1px);border-color:var(--border)}
+.buddy-card.me{border-color:var(--primary);background:var(--primary-light)}
+.buddy-avatar{
+  width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#ff9a9e,#fecfef);
+  display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 6px;
+}
+.buddy-name{font-size:12px;font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.buddy-task{font-size:10px;color:var(--text-secondary);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.buddy-timer{
+  font-size:13px;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums;
+}
+.buddy-timer.rest{color:var(--green)}
+.buddy-status{
+  font-size:10px;color:var(--text-secondary);margin-top:2px;
+}
+
+.leaderboard-card{background:var(--card);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.leaderboard-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:4px}
+.leaderboard-row{
+  display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);
+}
+.leaderboard-row:last-child{border-bottom:none}
+.leaderboard-rank{
+  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;background:var(--text-secondary);flex-shrink:0;
+}
+.leaderboard-rank.gold{background:#f1c40f}
+.leaderboard-rank.silver{background:#bdc3c7}
+.leaderboard-rank.bronze{background:#e67e22}
+.leaderboard-name{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leaderboard-time{font-size:12px;font-weight:700;color:var(--primary)}
+
+.room-message{
+  text-align:center;padding:10px;background:var(--bg);border-radius:10px;
+  font-size:12px;color:var(--text-secondary);margin-bottom:12px;
+}
+
+/* Auth Modal */
+.auth-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  z-index:300;display:flex;align-items:center;justify-content:center;
+}
+.auth-overlay.hidden{display:none}
+.auth-box{
+  background:var(--card);border-radius:20px;width:90%;max-width:360px;
+  padding:28px 24px 24px;box-shadow:0 20px 60px rgba(0,0,0,.15);
+  animation:authIn .3s ease;
+}
+@keyframes authIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.auth-title{font-size:20px;font-weight:700;text-align:center;margin-bottom:20px}
+.auth-tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:8px}
+.auth-tab{
+  flex:1;padding:8px;border:none;background:transparent;color:var(--text-secondary);
+  font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;font-family:inherit;
+}
+.auth-tab.active{color:var(--primary);background:var(--primary-light)}
+.auth-field{margin-bottom:14px}
+.auth-field label{display:block;font-size:13px;font-weight:500;margin-bottom:5px;color:var(--text-secondary)}
+.auth-field input{
+  width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:12px;
+  font-size:14px;background:var(--bg);color:var(--text);outline:none;font-family:inherit;
+}
+.auth-field input:focus{border-color:var(--primary)}
+.avatar-picker{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.avatar-option{
+  width:38px;height:38px;border-radius:50%;font-size:22px;display:flex;
+  align-items:center;justify-content:center;cursor:pointer;border:3px solid transparent;
+  background:var(--bg);transition:all .2s;
+}
+.avatar-option:hover{transform:scale(1.1)}
+.avatar-option.selected{border-color:var(--primary);background:var(--primary-light)}
+.auth-error{color:var(--primary);font-size:12px;margin-top:-8px;margin-bottom:12px;text-align:center}
+.auth-btn{
+  width:100%;padding:12px;border:none;border-radius:12px;background:var(--primary);
+  color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;
+  box-shadow:0 4px 14px rgba(232,93,74,.35);transition:all .2s;
+}
+.auth-btn:hover{background:var(--primary-dark)}
+.auth-btn:disabled{opacity:.6;cursor:not-allowed}
+
+/* Member Tasks Modal */
+.member-tasks-list{max-height:240px;overflow-y:auto}
+.member-task-item{
+  display:flex;align-items:center;padding:8px 4px;gap:8px;
+  border-bottom:1px solid var(--border);font-size:13px;
+}
+.member-task-item:last-child{border-bottom:none}
+.member-task-check{
+  width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10px;flex-shrink:0;
+}
+.member-task-check.done{background:var(--success);color:#fff}
+.member-task-check.undone{background:var(--border)}
+.member-task-name{flex:1}
+.member-task-name.done{text-decoration:line-through;color:var(--text-secondary)}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:350;display:flex;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.hidden{display:none}
+.modal-sheet{
+  background:var(--card);border-radius:24px 24px 0 0;
+  width:100%;max-width:420px;padding:24px 20px 32px;
+  animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:18px;font-weight:600;margin-bottom:18px;text-align:center}
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--border);
+}
+.setting-label{font-size:14px}
+.setting-control{display:flex;align-items:center;gap:8px}
+.setting-input{
+  width:60px;padding:6px 8px;border:2px solid var(--border);
+  border-radius:8px;text-align:center;font-size:14px;
+  background:var(--bg);color:var(--text);font-family:inherit;
+}
+.setting-input:focus{outline:none;border-color:var(--primary)}
+.setting-unit{font-size:12px;color:var(--text-secondary)}
+.toggle-switch{
+  width:44px;height:26px;background:var(--border);border-radius:13px;
+  cursor:pointer;position:relative;transition:background .2s;
+}
+.toggle-switch.on{background:var(--primary)}
+.toggle-switch::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;background:#fff;border-radius:50%;
+  transition:transform .2s;
+}
+.toggle-switch.on::after{transform:translateX(18px)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1;justify-content:center}
+
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:#2d3436;color:#fff;padding:10px 22px;border-radius:20px;
+  font-size:13px;z-index:200;pointer-events:none;
+  animation:toastIn .3s, toastOut .3s 1.5s forwards;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(-8px)}}
+
+@keyframes pulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.04)}
+}
+.timer-center.ending{animation:pulse .8s infinite}
+
+.task-list::-webkit-scrollbar{width:4px}
+.task-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.empty-state{text-align:center;padding:20px;color:var(--text-secondary);font-size:13px}
+
+/* Goal Modal */
+.goal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);
+  z-index:350;display:flex;align-items:center;justify-content:center;
+}
+.goal-overlay.hidden{display:none}
+.goal-box{
+  background:var(--card);border-radius:20px;width:90%;max-width:360px;
+  padding:28px 24px 24px;box-shadow:0 20px 60px rgba(0,0,0,.15);
+  animation:authIn .3s ease;
+}
+.goal-title{font-size:18px;font-weight:700;text-align:center;margin-bottom:8px}
+.goal-subtitle{font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:20px}
+.goal-input{
+  width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;
+  font-size:15px;background:var(--bg);color:var(--text);outline:none;font-family:inherit;margin-bottom:16px;
+}
+.goal-input:focus{border-color:var(--primary)}
+.goal-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;justify-content:center}
+.goal-preset{
+  padding:6px 12px;border:2px solid var(--border);border-radius:20px;
+  background:var(--bg);font-size:12px;color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:all .2s;
+}
+.goal-preset:hover{border-color:var(--primary);color:var(--primary)}
+
+/* Study Report */
+.report-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.report-stat{text-align:center;padding:14px 6px;background:var(--bg);border-radius:12px}
+.report-stat-value{font-size:24px;font-weight:700;color:var(--primary);line-height:1}
+.report-stat-label{font-size:11px;color:var(--text-secondary);margin-top:4px}
+
+/* Activity Feed */
+.activity-feed{max-height:180px;overflow-y:auto;margin-bottom:14px}
+.activity-item{
+  display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12px;
+  border-bottom:1px solid var(--border);animation:fadeIn .4s ease;
+}
+.activity-item:last-child{border-bottom:none}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.activity-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--bg)}
+.activity-text{flex:1;color:var(--text-secondary)}
+.activity-text strong{color:var(--text);font-weight:600}
+.activity-time{color:var(--text-secondary);font-size:11px;white-space:nowrap}
+
+/* Encourage Button */
+.encourage-bar{display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+.encourage-btn{
+  width:28px;height:28px;border:none;border-radius:50%;background:var(--bg);
+  font-size:14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;
+}
+.encourage-btn:hover{transform:scale(1.2);background:var(--primary-light)}
+.encourage-float{
+  position:absolute;pointer-events:none;font-size:20px;animation:floatUp 1.2s ease forwards;z-index:50;
+}
+@keyframes floatUp{
+  0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-50px) scale(1.4)}
+}
+
+/* Streak Badge */
+.streak-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;
+  padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
+}
+.streak-badge.cold{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+
+/* Room Announcement */
+.room-announcement{
+  background:linear-gradient(135deg,var(--primary-light),var(--bg));
+  border-radius:12px;padding:12px 14px;margin-bottom:14px;
+  border-left:4px solid var(--primary);font-size:13px;
+}
+.room-announcement-label{font-size:11px;color:var(--primary);font-weight:700;margin-bottom:3px}
+.room-announcement-text{color:var(--text);font-weight:500}
+
+/* Public Room List Enhancements */
+.room-card .room-count{
+  display:inline-flex;align-items:center;gap:3px;
+  background:var(--bg);padding:2px 8px;border-radius:10px;
+  font-size:11px;color:var(--text-secondary);margin-top:4px;
+}
+.room-card .room-count::before{content:'●';color:var(--success);font-size:8px}
+
+/* Buddy Card Enhancements */
+.buddy-card{position:relative}
+.buddy-encourage-count{
+  position:absolute;top:-4px;right:-4px;
+  background:var(--primary);color:#fff;font-size:10px;font-weight:700;
+  width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+}
+.buddy-goal{font-size:10px;color:var(--primary);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+
+.group-tabs{
+  display:flex;gap:5px;margin-bottom:8px;overflow-x:auto;
+  padding-bottom:4px;flex-wrap:wrap;
+}
+.group-tab{
+  padding:4px 10px;border:2px solid var(--border);border-radius:14px;
+  font-size:11.5px;color:var(--text-secondary);cursor:pointer;
+  white-space:nowrap;transition:all .2s;font-family:inherit;background:transparent;
+}
+.group-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.group-tab.add-tab{font-size:15px;line-height:1;padding:2px 8px;border-style:dashed}
+.group-add-row{display:flex;gap:4px;margin-bottom:8px}
+.group-add-row input{flex:1;padding:5px 10px;border:2px solid var(--primary);border-radius:10px;font-size:12px;background:var(--bg);color:var(--text);outline:none;font-family:inherit}
+.group-add-row button{padding:4px 10px;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.task-group-tag{
+  font-size:10px;color:var(--primary);background:var(--primary-light);
+  padding:1px 6px;border-radius:5px;margin-right:4px;flex-shrink:0;font-weight:500;
+}
+.task-progress{
+  font-size:11px;color:var(--primary);font-weight:600;margin-left:auto;flex-shrink:0;
+  padding-left:6px;
+}
+.task-progress.done{color:var(--success)}
+.task-name-wrap{flex:1;display:flex;align-items:center;overflow:hidden;min-width:0}
+.duration-btn{
+  padding:4px 10px;border:2px solid var(--border);border-radius:12px;
+  font-size:11.5px;color:var(--text-secondary);cursor:pointer;
+  background:transparent;font-family:inherit;font-weight:500;transition:all .2s;
+}
+.duration-btn:hover{border-color:var(--primary);color:var(--primary)}
+.duration-btn.active{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
+.duration-btn:active{transform:scale(.94)}
+
+@media(max-width:380px){
+  .timer-ring-wrap{width:210px;height:210px}
+  .timer-time{font-size:42px}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .btn{padding:10px 18px;font-size:14px}
+  .buddy-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- Auth Modal -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="auth-title" style="margin-bottom:0">🍅 番茄Todo</div>
+      <button id="authCloseBtn" style="width:32px;height:32px;border:none;background:var(--bg);border-radius:50%;font-size:16px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth="login">登录</button>
+      <button class="auth-tab" data-auth="register">注册</button>
+    </div>
+    <div id="authForm">
+      <div class="auth-field">
+        <label>账号</label>
+        <input type="text" id="authUsername" placeholder="请输入账号" maxlength="20">
+      </div>
+      <div class="auth-field">
+        <label>密码</label>
+        <input type="password" id="authPassword" placeholder="请输入密码" maxlength="30">
+      </div>
+      <div class="auth-field" id="registerFields" style="display:none">
+        <label>昵称</label>
+        <input type="text" id="authNickname" placeholder="怎么称呼你？" maxlength="12">
+        <label style="margin-top:10px">选择头像</label>
+        <div class="avatar-picker" id="avatarPicker"></div>
+      </div>
+      <div class="auth-error" id="authError"></div>
+      <button class="auth-btn" id="authSubmit">登录</button>
+      <div style="text-align:center;margin-top:12px">
+        <a href="#" id="authSkipLink" style="color:var(--text-secondary);font-size:13px;text-decoration:none">跳过，离线使用 →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Member Tasks Modal -->
+<div class="modal-overlay hidden" id="memberTasksModal">
+  <div class="modal-sheet">
+    <div class="modal-title" id="memberTasksTitle">好友今日任务</div>
+    <div class="member-tasks-list" id="memberTasksList"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-primary" id="closeMemberTasks">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Goal Setting Modal -->
+<div class="goal-overlay hidden" id="goalModal">
+  <div class="goal-box">
+    <div class="goal-title">🎯 设定本次学习目标</div>
+    <div class="goal-subtitle">明确的目标能让专注更高效</div>
+    <input type="text" class="goal-input" id="goalInput" placeholder="例如：完成数学作业第3章" maxlength="40">
+    <div class="goal-presets">
+      <button class="goal-preset">完成作业</button>
+      <button class="goal-preset">背单词50个</button>
+      <button class="goal-preset">阅读1小时</button>
+      <button class="goal-preset">复习笔记</button>
+      <button class="goal-preset">刷题训练</button>
+      <button class="goal-preset">整理错题</button>
+    </div>
+    <button class="auth-btn" id="saveGoalBtn">开始自习</button>
+  </div>
+</div>
+
+<!-- Study Report Modal -->
+<div class="modal-overlay hidden" id="studyReportModal">
+  <div class="modal-sheet">
+    <div class="modal-title">📊 本次自习报告</div>
+    <div class="report-stats" id="reportStats"></div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div class="streak-badge" id="reportStreak" style="display:none"></div>
+    </div>
+    <div id="reportMessage" style="text-align:center;font-size:14px;color:var(--text-secondary);margin-bottom:16px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="closeReportBtn">知道了</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <h1><span class="logo">🍅</span>番茄Todo</h1>
+    <div class="header-actions">
+      <div class="user-badge" id="userBadge" style="display:none">
+        <span class="avatar" id="userAvatar">😊</span>
+        <span class="name" id="userName">用户</span>
+      </div>
+      <button class="icon-btn" id="darkToggle" title="深色模式">🌙</button>
+      <button class="icon-btn" id="settingsBtn" title="设置">⚙️</button>
+      <button class="icon-btn" id="logoutBtn" title="退出登录" style="display:none">🚪</button>
+    </div>
+  </div>
+
+  <!-- View Tabs -->
+  <div class="view-tabs" id="viewTabs">
+    <button class="view-tab active" data-view="personal">👤 个人专注</button>
+    <button class="view-tab" data-view="studyRoom">🏫 自习室</button>
+  </div>
+
+  <!-- Personal View -->
+  <div id="personalView">
+    <div class="card" id="timerCard">
+      <div class="mode-tabs" id="modeTabs">
+        <button class="mode-tab active" data-mode="focus">🍅 专注</button>
+        <button class="mode-tab" data-mode="shortBreak">☕ 短休</button>
+        <button class="mode-tab" data-mode="longBreak">🌿 长休</button>
+        <button class="mode-tab" data-mode="stopwatch">⏱ 正计时</button>
+      </div>
+      <div class="duration-quick" id="durationQuick" style="display:flex;gap:5px;justify-content:center;margin-bottom:14px;flex-wrap:wrap">
+        <button class="duration-btn active" data-dur="25">25min</button>
+        <button class="duration-btn" data-dur="45">45min</button>
+        <button class="duration-btn" data-dur="60">60min</button>
+        <button class="duration-btn" data-dur="90">90min</button>
+        <button class="duration-btn" data-dur="120">120min</button>
+        <button class="duration-btn" data-dur="180">180min</button>
+      </div>
+      <div class="timer-ring-wrap">
+        <svg viewBox="0 0 260 260">
+          <circle class="ring-bg" cx="130" cy="130" r="120"/>
+          <circle class="ring-progress" id="ringProgress" cx="130" cy="130" r="120"/>
+        </svg>
+        <div class="timer-center" id="timerCenter">
+          <div class="timer-time" id="timerTime">25:00</div>
+          <div class="timer-label" id="timerLabel">准备开始</div>
+          <div class="timer-current-task" id="timerCurrentTask"></div>
+        </div>
+      </div>
+      <div class="timer-actions">
+        <button class="btn btn-outline" id="skipBtn" style="display:none">跳过</button>
+        <button class="btn btn-primary" id="startBtn">▶ 开始专注</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">📋 待办事项</span>
+        <span class="task-count" id="taskCount">0 个任务</span>
+      </div>
+      <div class="group-tabs" id="groupTabs"></div>
+      <div class="add-task-row">
+        <input class="input" id="taskInput" placeholder="任务名称..." maxlength="30" autocomplete="off" style="flex:3;min-width:0">
+        <select class="input" id="taskGroup" style="flex:1.5;min-width:50px;padding:10px 2px;font-size:12px"></select>
+        <select class="input" id="taskTarget" style="width:44px;min-width:44px;padding:10px 2px;text-align:center;font-size:12px">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4" selected>4</option><option value="5">5</option><option value="6">6</option>
+          <option value="8">8</option>
+        </select>
+        <button class="btn btn-primary btn-sm" id="addTaskBtn">+</button>
+      </div>
+      <div class="task-list" id="taskList">
+        <div class="empty-state">还没有任务，添加一个吧 ✨</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="margin-bottom:12px">📊 今日统计</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-value" id="statFocus">0</div>
+          <div class="stat-label">专注次数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statTime">0min</div>
+          <div class="stat-label">专注时长</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statTasks">0</div>
+          <div class="stat-label">完成任务</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study Room View -->
+  <div id="studyRoomView" style="display:none">
+    <div id="roomListPanel">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">🏫 选择自习室</div>
+        <div class="room-list" id="roomList"></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">🔑 加入已有房间</div>
+        <div class="join-room-row">
+          <input class="input" id="joinCodeInput" placeholder="输入6位口令..." maxlength="6" style="text-transform:uppercase">
+          <button class="btn btn-primary btn-sm" id="joinCodeBtn">加入</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="roomDetailPanel" style="display:none">
+      <div class="card">
+        <div class="room-header">
+          <div class="room-header-left">
+            <span class="room-header-icon" id="roomDetailIcon">📚</span>
+            <div class="room-header-info">
+              <div class="room-header-name" id="roomDetailName">图书馆</div>
+              <div class="room-header-count" id="roomDetailCount">0 人在线</div>
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm" id="leaveRoomBtn">退出房间</button>
+        </div>
+        <div class="share-code-box">
+          <div class="share-code-label">分享口令，邀请好友加入</div>
+          <div class="share-code-value" id="shareCodeValue">------</div>
+          <button class="btn btn-primary btn-sm" id="copyCodeBtn" style="margin-top:8px">📋 复制口令</button>
+        </div>
+        <div class="room-message" id="roomMessage">欢迎来到自习室！</div>
+        <div class="buddy-grid" id="buddyGrid"></div>
+        <div style="text-align:center;margin-bottom:10px">
+          <button class="btn btn-primary btn-sm" id="syncRoomBtn">⏱ 将我的计时同步到房间</button>
+        </div>
+        <div class="activity-feed" id="activityFeed"></div>
+      </div>
+      <div class="leaderboard-card">
+        <div class="leaderboard-title">🏆 实时排行榜</div>
+        <div id="leaderboardList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal-sheet">
+    <div class="modal-title">⚙️ 设置</div>
+    <div class="setting-row">
+      <span class="setting-label">专注时长 (分钟)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="focusDuration" type="number" min="25" max="180" value="25">
+        <span class="setting-unit">分钟</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">短休时长 (分钟)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="shortBreakDuration" type="number" min="1" max="60" value="5">
+        <span class="setting-unit">分钟</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">长休时长 (分钟)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="longBreakDuration" type="number" min="1" max="120" value="15">
+        <span class="setting-unit">分钟</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">长休间隔 (专注次数)</span>
+      <div class="setting-control">
+        <input class="setting-input" id="longBreakInterval" type="number" min="2" max="10" value="4">
+        <span class="setting-unit">次</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">提示音</span>
+      <div class="toggle-switch on" id="soundToggle"></div>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">桌面通知</span>
+      <div class="toggle-switch on" id="notifyToggle"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="closeSettings">取消</button>
+      <button class="btn btn-primary" id="saveSettings">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '';
+const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+
+// HTTP Client with 20s timeout
+const FETCH_TIMEOUT = 20000;
+function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
+}
+function authHeaders() {
+  const token = localStorage.getItem('pomodoro-token');
+  return {
+    'ngrok-skip-browser-warning': '1',
+    ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+  };
+}
+async function apiGet(path) {
+  const res = await fetchWithTimeout(API_BASE + path, { headers: authHeaders() });
+  return res.json();
+}
+async function apiPost(path, body) {
+  const res = await fetchWithTimeout(API_BASE + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+async function apiPatch(path, body) {
+  const res = await fetchWithTimeout(API_BASE + path, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+async function apiDelete(path) {
+  const res = await fetchWithTimeout(API_BASE + path, {
+    method: 'DELETE',
+    headers: authHeaders()
+  });
+  return res.json();
+}
+
+class PomodoroApp {
+  constructor() {
+    this.mode = 'focus';
+    this.timerRunning = false;
+    this.timeLeft = 25 * 60;
+    this.totalTime = 25 * 60;
+    this.timeElapsed = 0;
+    this.intervalId = null;
+    this.startTimestamp = null;
+    this.timeAtStart = null;
+    this.currentTaskId = null;
+    this.consecutiveFocus = 0;
+    this.activities = [];
+    this.currentGoal = '';
+    this.currentGroup = '全部';
+    this.groups = ['默认'];
+    this.showingGroupAdd = false;
+
+    this.settings = {
+      focusDuration: 25,
+      shortBreakDuration: 5,
+      longBreakDuration: 15,
+      longBreakInterval: 4,
+      soundEnabled: true,
+      notificationEnabled: true,
+    };
+
+    this.tasks = [];
+    this.todayStats = { focusCount: 0, totalFocusMin: 0, completedTasks: 0 };
+
+    // Auth
+    this.user = null;
+    this.authMode = 'login';
+    this.selectedAvatar = '😊';
+
+    // Study Room
+    this.currentView = 'personal';
+    this.currentRoom = null;
+    this.roomMembers = [];
+    this.roomRanking = [];
+    this.ws = null;
+
+    this.rooms = [
+      { id: 'library', name: '静谧图书馆', icon: '📚', theme: 'linear-gradient(135deg,#667eea,#764ba2)', desc: '安静专注，适合深度学习' },
+      { id: 'cafe', name: '温馨咖啡厅', icon: '☕', theme: 'linear-gradient(135deg,#f093fb,#f5576c)', desc: '轻松氛围，适合创造性工作' },
+      { id: 'forest', name: '清晨森林', icon: '🌲', theme: 'linear-gradient(135deg,#4facfe,#00f2fe)', desc: '自然清新，适合阅读和思考' },
+      { id: 'night', name: '深夜自习室', icon: '🌙', theme: 'linear-gradient(135deg,#434343,#000000)', desc: '夜深人静，适合冲刺备考' },
+    ];
+    this.avatars = ['😊','🤓','😎','🧐','😌','🙂','😺','🐶','🐱','🦊','🐼','🐨','👽','🤖','👻','🎃'];
+
+    this.$ = (sel) => document.querySelector(sel);
+    this.$$ = (sel) => document.querySelectorAll(sel);
+
+    this.init();
+  }
+
+  init() {
+    this.loadTheme();
+    this.cacheDom();
+    this.bindEvents();
+    this.renderAvatarPicker();
+    this.checkAuth();
+  }
+
+  cacheDom() {
+    this.el = {
+      timerTime: this.$('#timerTime'),
+      timerLabel: this.$('#timerLabel'),
+      timerCurrentTask: this.$('#timerCurrentTask'),
+      timerCenter: this.$('#timerCenter'),
+      ringProgress: this.$('#ringProgress'),
+      startBtn: this.$('#startBtn'),
+      skipBtn: this.$('#skipBtn'),
+      modeTabs: this.$$('.mode-tab'),
+      taskInput: this.$('#taskInput'),
+      taskGroup: this.$('#taskGroup'),
+      taskTarget: this.$('#taskTarget'),
+      groupTabs: this.$('#groupTabs'),
+      taskList: this.$('#taskList'),
+      taskCount: this.$('#taskCount'),
+      statFocus: this.$('#statFocus'),
+      statTime: this.$('#statTime'),
+      statTasks: this.$('#statTasks'),
+      settingsModal: this.$('#settingsModal'),
+      darkToggle: this.$('#darkToggle'),
+      viewTabs: this.$$('.view-tab'),
+      personalView: this.$('#personalView'),
+      studyRoomView: this.$('#studyRoomView'),
+      roomList: this.$('#roomList'),
+      roomListPanel: this.$('#roomListPanel'),
+      roomDetailPanel: this.$('#roomDetailPanel'),
+      roomDetailIcon: this.$('#roomDetailIcon'),
+      roomDetailName: this.$('#roomDetailName'),
+      roomDetailCount: this.$('#roomDetailCount'),
+      buddyGrid: this.$('#buddyGrid'),
+      leaderboardList: this.$('#leaderboardList'),
+      roomMessage: this.$('#roomMessage'),
+      leaveRoomBtn: this.$('#leaveRoomBtn'),
+      syncRoomBtn: this.$('#syncRoomBtn'),
+      authOverlay: this.$('#authOverlay'),
+      authUsername: this.$('#authUsername'),
+      authPassword: this.$('#authPassword'),
+      authNickname: this.$('#authNickname'),
+      authSubmit: this.$('#authSubmit'),
+      authError: this.$('#authError'),
+      registerFields: this.$('#registerFields'),
+      avatarPicker: this.$('#avatarPicker'),
+      userBadge: this.$('#userBadge'),
+      userAvatar: this.$('#userAvatar'),
+      userName: this.$('#userName'),
+      logoutBtn: this.$('#logoutBtn'),
+      shareCodeValue: this.$('#shareCodeValue'),
+      memberTasksModal: this.$('#memberTasksModal'),
+      memberTasksTitle: this.$('#memberTasksTitle'),
+      memberTasksList: this.$('#memberTasksList'),
+      closeMemberTasks: this.$('#closeMemberTasks'),
+      joinCodeInput: this.$('#joinCodeInput'),
+      joinCodeBtn: this.$('#joinCodeBtn'),
+    };
+
+    this.ringCircumference = 2 * Math.PI * 120;
+    this.el.ringProgress.style.strokeDasharray = this.ringCircumference;
+  }
+
+  // ─── Auth ─────────────────────────────────────
+
+  renderAvatarPicker() {
+    this.el.avatarPicker.innerHTML = this.avatars.map(a => `
+      <div class="avatar-option${a === this.selectedAvatar ? ' selected' : ''}" data-avatar="${a}">${a}</div>
+    `).join('');
+    this.el.avatarPicker.querySelectorAll('.avatar-option').forEach(el => {
+      el.addEventListener('click', () => {
+        this.el.avatarPicker.querySelectorAll('.avatar-option').forEach(x => x.classList.remove('selected'));
+        el.classList.add('selected');
+        this.selectedAvatar = el.dataset.avatar;
+      });
+    });
+  }
+
+  bindEvents() {
+    // Auth tabs
+    this.$$('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.authMode = tab.dataset.auth;
+        this.$$('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.auth === this.authMode));
+        this.el.registerFields.style.display = this.authMode === 'register' ? 'block' : 'none';
+        this.el.authSubmit.textContent = this.authMode === 'register' ? '注册并登录' : '登录';
+        this.el.authError.textContent = '';
+      });
+    });
+
+    this.el.authSubmit.addEventListener('click', () => this.handleAuth());
+    this.el.logoutBtn.addEventListener('click', () => this.logout());
+    this.$('#authCloseBtn').addEventListener('click', () => this.skipAuth());
+    this.$('#authSkipLink').addEventListener('click', () => this.skipAuth());
+
+    // Enter key submits auth form
+    this.el.authUsername.addEventListener('keydown', e => { if (e.key === 'Enter') this.handleAuth(); });
+    this.el.authPassword.addEventListener('keydown', e => { if (e.key === 'Enter') this.handleAuth(); });
+    this.el.authNickname.addEventListener('keydown', e => { if (e.key === 'Enter') this.handleAuth(); });
+
+    // View tabs
+    this.el.viewTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.switchView(tab.dataset.view);
+      });
+    });
+
+    // Mode tabs
+    this.el.modeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (this.timerRunning) {
+          if (!confirm('切换模式将重置当前计时，确定吗？')) return;
+          this.stopTimer();
+        }
+        this.mode = tab.dataset.mode;
+        this.applyMode();
+      });
+    });
+
+    // Start / Pause
+    this.el.startBtn.addEventListener('click', () => {
+      if (this.timerRunning) this.pauseTimer();
+      else this.startTimer();
+    });
+
+    // Skip break
+    this.el.skipBtn.addEventListener('click', () => this.skipBreak());
+
+    // Add task
+    this.el.taskInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') this.addTask();
+    });
+    this.$('#addTaskBtn').addEventListener('click', () => this.addTask());
+
+    // Settings
+    this.$('#settingsBtn').addEventListener('click', () => this.openSettings());
+    this.$('#closeSettings').addEventListener('click', () => this.closeSettings());
+    this.$('#saveSettings').addEventListener('click', () => this.saveSettings());
+    this.el.settingsModal.addEventListener('click', e => {
+      if (e.target === this.el.settingsModal) this.closeSettings();
+    });
+
+    // Dark mode
+    this.el.darkToggle.addEventListener('click', () => this.toggleDark());
+
+    // Duration quick-select
+    this.$$('.duration-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.selectDuration(parseInt(btn.dataset.dur)));
+    });
+
+    // Toggle switches
+    this.$('#soundToggle').addEventListener('click', function() { this.classList.toggle('on'); });
+    this.$('#notifyToggle').addEventListener('click', function() { this.classList.toggle('on'); });
+
+    // Study Room
+    this.el.leaveRoomBtn.addEventListener('click', () => this.leaveRoom());
+    this.el.syncRoomBtn.addEventListener('click', () => this.syncRoomTimer());
+    this.el.joinCodeBtn.addEventListener('click', () => this.joinByCode());
+    this.$('#copyCodeBtn').addEventListener('click', () => this.copyRoomCode());
+    this.el.joinCodeInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') this.joinByCode();
+    });
+
+    // Goal modal
+    this.$('#saveGoalBtn').addEventListener('click', () => this.saveGoalAndStart());
+    this.$('#goalModal').addEventListener('click', e => {
+      if (e.target === this.$('#goalModal')) this.hideGoalModal();
+    });
+    this.$('#goalInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') this.saveGoalAndStart();
+    });
+    this.$('#goalModal').querySelectorAll('.goal-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.$('#goalInput').value = btn.textContent;
+        this.$('#goalInput').focus();
+      });
+    });
+
+    // Study report
+    this.$('#closeReportBtn').addEventListener('click', () => this.hideStudyReport());
+    this.$('#studyReportModal').addEventListener('click', e => {
+      if (e.target === this.$('#studyReportModal')) this.hideStudyReport();
+    });
+
+    // Member tasks modal
+    this.el.closeMemberTasks.addEventListener('click', () => this.el.memberTasksModal.classList.add('hidden'));
+    this.el.memberTasksModal.addEventListener('click', e => {
+      if (e.target === this.el.memberTasksModal) this.el.memberTasksModal.classList.add('hidden');
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.code === 'Space') { e.preventDefault(); this.el.startBtn.click(); }
+    });
+  }
+
+  async checkAuth() {
+    const token = localStorage.getItem('pomodoro-token');
+    if (!token) {
+      this.showAuth();
+      return;
+    }
+    try {
+      const user = await apiGet('/api/auth/me');
+      if (user.error) {
+        this.showAuth();
+        return;
+      }
+      this.user = user;
+      this.hideAuth();
+      this.initApp();
+    } catch (e) {
+      this.showAuth();
+    }
+  }
+
+  showAuth() {
+    this.el.authOverlay.classList.remove('hidden');
+  }
+
+  hideAuth() {
+    this.el.authOverlay.classList.add('hidden');
+    this.el.userBadge.style.display = 'flex';
+    this.el.logoutBtn.style.display = 'flex';
+    this.el.userAvatar.textContent = this.user.avatar;
+    this.el.userName.textContent = this.user.nickname;
+  }
+
+  skipAuth() {
+    this.el.authOverlay.classList.add('hidden');
+    this.user = { id: 0, nickname: '离线', avatar: '👤' };
+    this.el.userBadge.style.display = 'flex';
+    this.el.userAvatar.textContent = '👤';
+    this.el.userName.textContent = '离线模式';
+    this.applyMode();
+    this.updateTimerDisplay();
+    this.updateDocTitle();
+    this.el.taskList.innerHTML = '<div class="empty-state">登录后才能使用任务和自习室功能</div>';
+  }
+
+  async handleAuth() {
+    const username = this.el.authUsername.value.trim();
+    const password = this.el.authPassword.value;
+    const nickname = this.el.authNickname.value.trim();
+    this.el.authError.textContent = '';
+
+    if (!username || !password) {
+      this.el.authError.textContent = '请填写账号和密码';
+      return;
+    }
+
+    this.el.authSubmit.disabled = true;
+    this.el.authSubmit.textContent = '处理中...';
+
+    try {
+      if (this.authMode === 'register') {
+        if (!nickname) {
+          this.el.authError.textContent = '请填写昵称';
+          this.el.authSubmit.disabled = false;
+          this.el.authSubmit.textContent = '注册并登录';
+          return;
+        }
+        const res = await apiPost('/api/auth/register', {
+          username, password, nickname, avatar: this.selectedAvatar
+        });
+        if (res.error) {
+          this.el.authError.textContent = res.error;
+          this.el.authSubmit.disabled = false;
+          this.el.authSubmit.textContent = '注册并登录';
+          return;
+        }
+        localStorage.setItem('pomodoro-token', res.token);
+        this.user = res.user;
+      } else {
+        const res = await apiPost('/api/auth/login', { username, password });
+        if (res.error) {
+          this.el.authError.textContent = res.error;
+          this.el.authSubmit.disabled = false;
+          this.el.authSubmit.textContent = '登录';
+          return;
+        }
+        localStorage.setItem('pomodoro-token', res.token);
+        this.user = res.user;
+      }
+
+      this.el.authSubmit.disabled = false;
+      this.el.authSubmit.textContent = this.authMode === 'register' ? '注册并登录' : '登录';
+      this.hideAuth();
+      this.initApp();
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        this.el.authError.textContent = '连接超时，请检查服务器是否启动';
+      } else {
+        this.el.authError.textContent = '网络连接失败，请检查网络后重试';
+      }
+      this.el.authSubmit.disabled = false;
+      this.el.authSubmit.textContent = this.authMode === 'register' ? '注册并登录' : '登录';
+    }
+  }
+
+  logout() {
+    localStorage.removeItem('pomodoro-token');
+    location.reload();
+  }
+
+  // ─── App Init ─────────────────────────────────
+
+  async initApp() {
+    this.applyMode();
+    this.$$('.duration-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.dur) === this.settings.focusDuration));
+    this.updateTimerDisplay();
+    this.updateDocTitle();
+    await this.loadTasks();
+    this.renderGroupTabs();
+    this.renderGroupSelect();
+    this.renderTasks();
+    this.calcStats();
+    this.renderStats();
+    this.renderRoomList();
+    if (this.settings.notificationEnabled) this.requestNotify();
+  }
+
+  // ─── View Switching ───────────────────────────
+
+  switchView(view) {
+    this.currentView = view;
+    this.el.viewTabs.forEach(t => t.classList.toggle('active', t.dataset.view === view));
+    if (view === 'personal') {
+      this.el.personalView.style.display = 'block';
+      this.el.studyRoomView.style.display = 'none';
+    } else {
+      this.el.personalView.style.display = 'none';
+      this.el.studyRoomView.style.display = 'block';
+      if (this.currentRoom) {
+        this.el.roomListPanel.style.display = 'none';
+        this.el.roomDetailPanel.style.display = 'block';
+      } else {
+        this.el.roomListPanel.style.display = 'block';
+        this.el.roomDetailPanel.style.display = 'none';
+        this.renderRoomList();
+      }
+    }
+  }
+
+  applyView() {
+    this.switchView(this.currentView);
+  }
+
+  // ─── Tasks (API) ──────────────────────────────
+
+  async loadTasks() {
+    try {
+      const tasks = await apiGet('/api/tasks');
+      if (Array.isArray(tasks)) {
+        this.tasks = tasks.map(t => ({
+          id: String(t.id),
+          name: t.name,
+          pomos: t.pomos || 0,
+          target_pomos: t.target_pomos || 1,
+          group_name: t.group_name || '默认',
+          done: !!t.done,
+          createdAt: t.created_at,
+        }));
+        this.extractGroups();
+      }
+    } catch (e) {
+      console.error('加载任务失败', e);
+    }
+  }
+
+  extractGroups() {
+    const names = this.tasks.map(t => t.group_name).filter(Boolean);
+    this.groups = ['默认', ...new Set(names)].filter((v, i, a) => a.indexOf(v) === i);
+    this.renderGroupTabs();
+  }
+
+  async addTask() {
+    const name = this.el.taskInput.value.trim();
+    if (!name) return;
+
+    const group_name = this.el.taskGroup.value || '默认';
+    const target_pomos = parseInt(this.el.taskTarget.value) || 1;
+
+    const res = await apiPost('/api/tasks', { name, group_name, target_pomos });
+    if (res.error) {
+      this.showToast(res.error);
+      return;
+    }
+
+    this.tasks.unshift({
+      id: String(res.id),
+      name: res.name,
+      pomos: 0,
+      target_pomos: target_pomos,
+      group_name: group_name,
+      done: false,
+      createdAt: Date.now(),
+    });
+
+    this.el.taskInput.value = '';
+    this.extractGroups();
+    this.renderGroupSelect();
+    this.renderTasks();
+  }
+
+  async toggleTask(id) {
+    const task = this.tasks.find(t => t.id === id);
+    if (!task) return;
+    const newDone = !task.done;
+
+    await apiPatch('/api/tasks/' + id, { done: newDone });
+
+    task.done = newDone;
+    if (newDone) {
+      if (this.currentTaskId === id) this.currentTaskId = null;
+    }
+    this.renderTasks();
+    this.calcStats();
+    this.renderStats();
+    this.updateTimerCurrentTask();
+
+    // Notify room
+    if (this.ws && this.currentRoom) {
+      this.ws.send(JSON.stringify({ type: 'task_complete', task_id: id }));
+    }
+  }
+
+  async deleteTask(id) {
+    if (this.currentTaskId === id) this.currentTaskId = null;
+    await apiDelete('/api/tasks/' + id);
+    this.tasks = this.tasks.filter(t => t.id !== id);
+    this.renderTasks();
+    this.calcStats();
+    this.renderStats();
+    this.updateTimerCurrentTask();
+  }
+
+  selectTask(id) {
+    if (this.timerRunning && this.mode === 'focus') return;
+    this.currentTaskId = this.currentTaskId === id ? null : id;
+    this.renderTasks();
+    this.updateTimerCurrentTask();
+  }
+
+  // ─── Groups ───────────────────────────────────
+
+  renderGroupTabs() {
+    let html = `<button class="group-tab${this.currentGroup === '全部' ? ' active' : ''}" data-group="全部">全部</button>`;
+    html += this.groups.map(g => `
+      <button class="group-tab${this.currentGroup === g ? ' active' : ''}" data-group="${this._esc(g)}">${this._esc(g)}</button>
+    `).join('');
+    html += `<button class="group-tab add-tab" id="addGroupBtn">+</button>`;
+    this.el.groupTabs.innerHTML = html;
+
+    this.el.groupTabs.querySelectorAll('.group-tab:not(.add-tab)').forEach(btn => {
+      btn.addEventListener('click', () => this.selectGroup(btn.dataset.group));
+    });
+    const addBtn = this.$('#addGroupBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => this.showGroupAddInput());
+    }
+  }
+
+  selectGroup(group) {
+    this.currentGroup = group;
+    this.renderGroupTabs();
+    this.renderTasks();
+  }
+
+  showGroupAddInput() {
+    if (this.showingGroupAdd) return;
+    this.showingGroupAdd = true;
+    const row = document.createElement('div');
+    row.className = 'group-add-row';
+    row.id = 'groupAddRow';
+    row.innerHTML = `
+      <input id="newGroupInput" placeholder="分组名称..." maxlength="10">
+      <button style="background:var(--primary);color:#fff" id="confirmGroupBtn">确定</button>
+      <button style="background:var(--border);color:var(--text-secondary)" id="cancelGroupBtn">取消</button>
+    `;
+    this.el.groupTabs.after(row);
+
+    const input = this.$('#newGroupInput');
+    input.focus();
+    this.$('#confirmGroupBtn').addEventListener('click', () => {
+      const name = input.value.trim();
+      if (name && !this.groups.includes(name)) {
+        this.groups.push(name);
+        this.renderGroupTabs();
+        this.renderGroupSelect();
+        this.selectGroup(name);
+      }
+      this.removeGroupAddInput();
+    });
+    this.$('#cancelGroupBtn').addEventListener('click', () => this.removeGroupAddInput());
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') this.$('#confirmGroupBtn').click();
+    });
+  }
+
+  removeGroupAddInput() {
+    const row = this.$('#groupAddRow');
+    if (row) row.remove();
+    this.showingGroupAdd = false;
+  }
+
+  renderGroupSelect() {
+    const sel = this.el.taskGroup;
+    const current = sel.value || '默认';
+    sel.innerHTML = this.groups.map(g => `<option value="${this._esc(g)}"${g === current ? ' selected' : ''}>${this._esc(g)}</option>`).join('');
+  }
+
+  renderTasks() {
+    const filtered = this.currentGroup === '全部'
+      ? this.tasks
+      : this.tasks.filter(t => (t.group_name || '默认') === this.currentGroup);
+
+    if (this.tasks.length === 0) {
+      this.el.taskList.innerHTML = '<div class="empty-state">还没有任务，添加一个吧 ✨</div>';
+      this.el.taskCount.textContent = '0 个任务';
+      return;
+    }
+
+    const active = this.tasks.filter(t => !t.done).length;
+    this.el.taskCount.textContent = `${active} 个进行中 / ${this.tasks.length} 总计`;
+
+    if (filtered.length === 0) {
+      this.el.taskList.innerHTML = '<div class="empty-state">该分组下暂无任务</div>';
+      return;
+    }
+
+    this.el.taskList.innerHTML = filtered.map(t => {
+      const group = (t.group_name && t.group_name !== '默认') ? `<span class="task-group-tag">${this._esc(t.group_name)}</span>` : '';
+      const target = t.target_pomos || 1;
+      const progressClass = t.pomos >= target && target > 0 ? ' done' : '';
+      return `
+      <div class="task-item${this.currentTaskId === t.id ? ' selected' : ''}" data-id="${t.id}">
+        <div class="task-check${t.done ? ' done' : ''}" data-action="toggle">${t.done ? '✓' : ''}</div>
+        <div class="task-name-wrap" data-action="select">${group}<span class="task-name${t.done ? ' done' : ''}">${this._esc(t.name)}</span></div>
+        <span class="task-progress${progressClass}">🍅${t.pomos}/${target}</span>
+        <button class="task-delete" data-action="delete">×</button>
+      </div>
+    `}).join('');
+
+    this.el.taskList.querySelectorAll('.task-item').forEach(el => {
+      el.addEventListener('click', e => {
+        const action = e.target.dataset.action;
+        const id = el.dataset.id;
+        if (action === 'toggle') this.toggleTask(id);
+        else if (action === 'delete') this.deleteTask(id);
+        else if (action === 'select' || e.target === el || e.target.classList.contains('task-name')) {
+          this.selectTask(id);
+        }
+      });
+    });
+  }
+
+  calcStats() {
+    this.todayStats.completedTasks = this.tasks.filter(t => t.done).length;
+  }
+
+  renderStats() {
+    this.el.statFocus.textContent = this.todayStats.focusCount;
+    this.el.statTime.textContent = this.todayStats.totalFocusMin + 'min';
+    this.el.statTasks.textContent = this.todayStats.completedTasks;
+  }
+
+  // ─── Timer ────────────────────────────────────
+
+  startTimer() {
+    if (this.mode === 'focus' && this.currentRoom && !this.timerRunning) {
+      this.showGoalModal();
+      return;
+    }
+
+    if (this.mode === 'focus' && !this.currentTaskId && this.tasks.length > 0) {
+      const active = this.tasks.find(t => !t.done);
+      if (active) this.selectTask(active.id);
+    }
+
+    this.timerRunning = true;
+    this.startTimestamp = Date.now();
+    if (this.mode === 'stopwatch') {
+      this.timeAtStart = this.timeElapsed;
+    } else {
+      this.timeAtStart = this.timeLeft;
+    }
+
+    this.el.startBtn.innerHTML = '⏸ 暂停';
+    this.el.startBtn.style.background = '#636e72';
+    this.el.startBtn.style.boxShadow = '0 4px 14px rgba(0,0,0,0.15)';
+    if (this.mode !== 'stopwatch') this.el.skipBtn.style.display = 'flex';
+    this.el.timerLabel.textContent = this.mode === 'focus' ? '专注中...' : this.mode === 'stopwatch' ? '计时中...' : '休息中...';
+
+    this.intervalId = setInterval(() => this.tick(), 200);
+    this.sendStatusUpdate();
+  }
+
+  pauseTimer() {
+    // For stopwatch, save elapsed time before pausing
+    if (this.mode === 'stopwatch') {
+      const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
+      this.timeElapsed = this.timeAtStart + elapsed;
+    }
+    this.timerRunning = false;
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+
+    this.el.startBtn.innerHTML = '▶ 继续';
+    this.el.startBtn.style.background = '';
+    this.el.startBtn.style.boxShadow = '';
+    this.el.timerLabel.textContent = '已暂停';
+    this.sendStatusUpdate();
+  }
+
+  stopTimer() {
+    this.timerRunning = false;
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+    if (this.mode === 'stopwatch') {
+      this.el.startBtn.innerHTML = '▶ 开始计时';
+    } else {
+      this.el.startBtn.innerHTML = this.mode === 'focus' ? '▶ 开始专注' : '▶ 开始休息';
+    }
+    this.el.startBtn.style.background = '';
+    this.el.startBtn.style.boxShadow = '';
+    this.el.skipBtn.style.display = 'none';
+    this.el.timerLabel.textContent = this.mode === 'stopwatch' ? '正计时' : '准备开始';
+    this.el.timerCenter.classList.remove('ending');
+    this.el.ringProgress.classList.remove('ending', 'short-mode', 'long-mode', 'stopwatch-mode');
+    if (this.mode === 'stopwatch') {
+      this.timeElapsed = 0;
+      this.updateTimerDisplay();
+    }
+    this.sendStatusUpdate();
+  }
+
+  tick() {
+    if (!this.timerRunning) return;
+    const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
+
+    if (this.mode === 'stopwatch') {
+      this.timeElapsed = this.timeAtStart + elapsed;
+      this.timeLeft = Math.max(0, this.totalTime - (this.timeElapsed % this.totalTime));
+    } else {
+      this.timeLeft = Math.max(0, this.timeAtStart - elapsed);
+    }
+
+    this.updateTimerDisplay();
+    this.updateDocTitle();
+
+    if (this.mode !== 'stopwatch') {
+      if (this.timeLeft <= 10 && this.timeLeft > 0 && this.mode === 'focus') {
+        this.el.timerCenter.classList.add('ending');
+        this.el.ringProgress.classList.add('ending');
+      }
+
+      if (this.timeLeft <= 0) {
+        this.completeSession();
+      }
+    }
+
+    // Send status every ~5s
+    if (Math.floor(elapsed) % 5 === 0) {
+      this.sendStatusUpdate();
+    }
+  }
+
+  async completeSession() {
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+    this.timerRunning = false;
+    this.el.timerCenter.classList.remove('ending');
+    this.el.ringProgress.classList.remove('ending');
+    this.el.startBtn.style.background = '';
+    this.el.startBtn.style.boxShadow = '';
+
+    if (this.settings.soundEnabled) this.playCompleteSound();
+    if (this.settings.notificationEnabled) this.showCompleteNotify();
+
+    if (this.mode === 'focus') {
+      this.consecutiveFocus++;
+      this.todayStats.focusCount++;
+      this.todayStats.totalFocusMin += this.settings.focusDuration;
+
+      if (this.currentTaskId) {
+        const task = this.tasks.find(t => t.id === this.currentTaskId);
+        if (task) {
+          task.pomos = (task.pomos || 0) + 1;
+          await apiPatch('/api/tasks/' + task.id, { pomos: task.pomos });
+        }
+      }
+
+      this.showToast('🎉 专注完成！太棒了！');
+      this.renderTasks();
+      this.renderStats();
+
+      // Show study report
+      this.showStudyReport();
+
+      // Notify WS
+      if (this.ws && this.currentRoom) {
+        this.ws.send(JSON.stringify({
+          type: 'status_update',
+          status: 'focus_complete',
+          duration: this.settings.focusDuration,
+        }));
+      }
+
+      const needLong = this.consecutiveFocus % this.settings.longBreakInterval === 0;
+      this.mode = needLong ? 'longBreak' : 'shortBreak';
+      this.timeLeft = needLong ? this.settings.longBreakDuration * 60 : this.settings.shortBreakDuration * 60;
+      this.totalTime = this.timeLeft;
+      this.applyMode();
+      this.updateTimerDisplay();
+      this.updateDocTitle();
+      this.renderTasks();
+
+      setTimeout(() => {
+        if (!this.timerRunning) this.startTimer();
+      }, 2000);
+    } else {
+      this.showToast(this.mode === 'longBreak' ? '🌿 长休结束，准备下一个专注吧' : '☕ 短休结束，继续加油');
+      this.mode = 'focus';
+      this.timeLeft = this.settings.focusDuration * 60;
+      this.totalTime = this.timeLeft;
+      this.applyMode();
+      this.stopTimer();
+      this.updateTimerDisplay();
+      this.updateDocTitle();
+    }
+  }
+
+  skipBreak() {
+    if (this.mode === 'focus') return;
+    this.stopTimer();
+    this.mode = 'focus';
+    this.timeLeft = this.settings.focusDuration * 60;
+    this.totalTime = this.timeLeft;
+    this.applyMode();
+    this.updateTimerDisplay();
+    this.updateDocTitle();
+  }
+
+  selectDuration(min) {
+    if (this.timerRunning && this.mode === 'focus') {
+      if (!confirm('切换时长将重置当前计时，确定吗？')) return;
+      this.stopTimer();
+    }
+    this.settings.focusDuration = min;
+    this.$$('.duration-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.dur) === min));
+    if (this.mode === 'focus' && !this.timerRunning) {
+      this.timeLeft = min * 60;
+      this.totalTime = this.timeLeft;
+      this.updateTimerDisplay();
+    }
+    this.showToast(`⏱ 专注时长已设为 ${min} 分钟`);
+  }
+
+  applyMode() {
+    // Show/hide duration selector: only for focus mode
+    const durEl = this.$('#durationQuick');
+    if (durEl) durEl.style.display = this.mode === 'focus' ? 'flex' : 'none';
+
+    this.el.modeTabs.forEach(t => {
+      t.classList.remove('active', 'short-active', 'long-active', 'stopwatch-active');
+      if (t.dataset.mode === this.mode) {
+        if (this.mode === 'shortBreak') t.classList.add('short-active');
+        else if (this.mode === 'longBreak') t.classList.add('long-active');
+        else if (this.mode === 'stopwatch') t.classList.add('stopwatch-active');
+        else t.classList.add('active');
+      }
+    });
+
+    this.el.ringProgress.classList.remove('short-mode', 'long-mode', 'stopwatch-mode', 'ending');
+    if (this.mode === 'shortBreak') this.el.ringProgress.classList.add('short-mode');
+    if (this.mode === 'longBreak') this.el.ringProgress.classList.add('long-mode');
+    if (this.mode === 'stopwatch') this.el.ringProgress.classList.add('stopwatch-mode');
+
+    this.el.timerCenter.classList.remove('ending');
+
+    if (!this.timerRunning) {
+      this.el.timerLabel.textContent = this.mode === 'stopwatch' ? '正计时' : '准备开始';
+      this.el.startBtn.innerHTML = this.mode === 'focus' ? '▶ 开始专注' : this.mode === 'stopwatch' ? '▶ 开始计时' : '▶ 开始休息';
+    }
+    this.el.skipBtn.style.display = (this.mode !== 'focus' && this.mode !== 'stopwatch') && this.timerRunning ? 'flex' : 'none';
+
+    const durations = { focus: this.settings.focusDuration, shortBreak: this.settings.shortBreakDuration, longBreak: this.settings.longBreakDuration, stopwatch: 0 };
+    if (!this.timerRunning) {
+      if (this.mode === 'stopwatch') {
+        this.timeElapsed = 0;
+        this.timeLeft = 0;
+        this.totalTime = 180 * 60; // ring reference: 180min = full circle
+      } else {
+        this.timeLeft = durations[this.mode] * 60;
+        this.totalTime = this.timeLeft;
+      }
+    }
+    this.updateTimerDisplay();
+    this.updateTimerCurrentTask();
+  }
+
+  updateTimerDisplay() {
+    let displaySec, progress;
+    if (this.mode === 'stopwatch') {
+      displaySec = this.timeElapsed;
+      progress = this.totalTime > 0 ? (this.timeElapsed % this.totalTime) / this.totalTime : 0;
+    } else {
+      displaySec = this.timeLeft;
+      progress = this.totalTime > 0 ? this.timeLeft / this.totalTime : 0;
+    }
+    const m = Math.floor(displaySec / 60);
+    const s = displaySec % 60;
+    this.el.timerTime.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    this.el.ringProgress.style.strokeDashoffset = this.ringCircumference * (1 - progress);
+  }
+
+  updateTimerCurrentTask() {
+    if (this.mode === 'focus' && this.currentTaskId) {
+      const task = this.tasks.find(t => t.id === this.currentTaskId);
+      this.el.timerCurrentTask.textContent = task ? `📌 ${task.name}` : '';
+    } else {
+      this.el.timerCurrentTask.textContent = '';
+    }
+  }
+
+  updateDocTitle() {
+    if (this.timerRunning) {
+      const d = this.mode === 'stopwatch' ? this.timeElapsed : this.timeLeft;
+      const m = Math.floor(d / 60);
+      const s = d % 60;
+      const labels = { focus: '专注', shortBreak: '短休', longBreak: '长休', stopwatch: '计时' };
+      document.title = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} - ${labels[this.mode]}中`;
+    } else {
+      document.title = '🍅 番茄Todo';
+    }
+  }
+
+  // ─── Settings ─────────────────────────────────
+
+  openSettings() {
+    this.$('#focusDuration').value = this.settings.focusDuration;
+    this.$('#shortBreakDuration').value = this.settings.shortBreakDuration;
+    this.$('#longBreakDuration').value = this.settings.longBreakDuration;
+    this.$('#longBreakInterval').value = this.settings.longBreakInterval;
+    this.$('#soundToggle').classList.toggle('on', this.settings.soundEnabled);
+    this.$('#notifyToggle').classList.toggle('on', this.settings.notificationEnabled);
+    this.el.settingsModal.classList.remove('hidden');
+  }
+
+  closeSettings() {
+    this.el.settingsModal.classList.add('hidden');
+  }
+
+  saveSettings() {
+    const focusDuration = parseInt(this.$('#focusDuration').value) || 25;
+    const shortBreakDuration = parseInt(this.$('#shortBreakDuration').value) || 5;
+    const longBreakDuration = parseInt(this.$('#longBreakDuration').value) || 15;
+    const longBreakInterval = parseInt(this.$('#longBreakInterval').value) || 4;
+    const soundEnabled = this.$('#soundToggle').classList.contains('on');
+    const notificationEnabled = this.$('#notifyToggle').classList.contains('on');
+
+    const changed = focusDuration !== this.settings.focusDuration
+      || shortBreakDuration !== this.settings.shortBreakDuration
+      || longBreakDuration !== this.settings.longBreakDuration;
+
+    this.settings.focusDuration = Math.max(25, Math.min(180, focusDuration));
+    this.settings.shortBreakDuration = Math.max(1, Math.min(60, shortBreakDuration));
+    this.settings.longBreakDuration = Math.max(1, Math.min(120, longBreakDuration));
+    this.settings.longBreakInterval = Math.max(2, Math.min(10, longBreakInterval));
+    this.settings.soundEnabled = soundEnabled;
+    this.settings.notificationEnabled = notificationEnabled;
+
+    this.$$('.duration-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.dur) === this.settings.focusDuration));
+
+    if (changed && !this.timerRunning) {
+      const durations = { focus: this.settings.focusDuration, shortBreak: this.settings.shortBreakDuration, longBreak: this.settings.longBreakDuration };
+      this.timeLeft = durations[this.mode] * 60;
+      this.totalTime = this.timeLeft;
+      this.updateTimerDisplay();
+    }
+
+    this.closeSettings();
+    this.showToast('✅ 设置已保存');
+    if (this.settings.notificationEnabled) this.requestNotify();
+  }
+
+  // ─── Dark Mode ────────────────────────────────
+
+  toggleDark() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? '' : 'dark');
+    this.el.darkToggle.textContent = isDark ? '🌙' : '☀️';
+    localStorage.setItem('pomodoro-theme', isDark ? '' : 'dark');
+  }
+
+  loadTheme() {
+    const theme = localStorage.getItem('pomodoro-theme');
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      if (this.el.darkToggle) this.el.darkToggle.textContent = '☀️';
+    }
+  }
+
+  // ─── Sound ────────────────────────────────────
+
+  playCompleteSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [660, 880, 1100].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.25);
+        osc.start(ctx.currentTime + i * 0.15);
+        osc.stop(ctx.currentTime + i * 0.15 + 0.25);
+      });
+    } catch(e) {}
+  }
+
+  // ─── Notifications ────────────────────────────
+
+  async requestNotify() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }
+
+  showCompleteNotify() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (this.mode === 'focus') {
+      new Notification('🍅 专注完成！', { body: '太棒了，休息一下吧～', silent: true });
+    } else {
+      new Notification('⏰ 休息结束', { body: '准备开始新的专注吧！', silent: true });
+    }
+  }
+
+  // ─── Toast ────────────────────────────────────
+
+  showToast(msg) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  // ─── Study Room ───────────────────────────────
+
+  renderRoomList() {
+    this.el.roomList.innerHTML = this.rooms.map(r => `
+      <div class="room-card" data-room="${r.id}">
+        <div class="room-icon">${r.icon}</div>
+        <div class="room-name">${r.name}</div>
+        <div class="room-meta">${r.desc}</div>
+        <button class="room-btn" data-room="${r.id}">创建房间</button>
+      </div>
+    `).join('');
+
+    this.el.roomList.querySelectorAll('.room-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.createRoom(btn.dataset.room);
+      });
+    });
+  }
+
+  async createRoom(roomType) {
+    const roomDef = this.rooms.find(r => r.id === roomType);
+    const res = await apiPost('/api/rooms', { name: roomDef.name, theme: roomType });
+    if (res.error) {
+      this.showToast(res.error);
+      return;
+    }
+    await this.enterRoom(res.code, roomDef);
+  }
+
+  async joinByCode() {
+    const code = this.el.joinCodeInput.value.trim().toUpperCase();
+    if (!code || code.length !== 6) {
+      this.showToast('请输入6位口令');
+      return;
+    }
+    const res = await apiPost('/api/rooms/join', { code });
+    if (res.error) {
+      this.showToast(res.error);
+      return;
+    }
+    const roomDef = this.rooms.find(r => r.id === res.room.theme) || this.rooms[0];
+    await this.enterRoom(res.room.code, roomDef);
+  }
+
+  async enterRoom(code, roomDef) {
+    this.currentRoom = { code, ...roomDef };
+    this.el.roomListPanel.style.display = 'none';
+    this.el.roomDetailPanel.style.display = 'block';
+    this.el.shareCodeValue.textContent = code;
+    // Show initial count: at least 1 (you)
+    this.el.roomDetailCount.textContent = '1 人在线';
+    this.renderRoomDetail();
+    this.connectWebSocket();
+    this.showToast(`🎉 已进入${roomDef.name}！`);
+
+    // Fetch room info (members + announcement)
+    try {
+      const res = await apiGet('/api/rooms/' + code);
+      if (res.room && res.room.announcement) {
+        this.renderRoomAnnouncement(res.room.announcement);
+      }
+      if (res.members) {
+        this.roomMembers = res.members;
+        this.el.roomDetailCount.textContent = `${res.members.length} 人在线`;
+        this.renderBuddyGrid();
+      }
+    } catch (e) {}
+  }
+
+  async copyRoomCode() {
+    try {
+      await navigator.clipboard.writeText(this.currentRoom.code);
+      this.showToast('✅ 口令已复制，快去分享吧！');
+    } catch (e) {
+      // Fallback
+      const input = document.createElement('input');
+      input.value = this.currentRoom.code;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      this.showToast('✅ 口令已复制！');
+    }
+  }
+
+  renderRoomDetail() {
+    if (!this.currentRoom) return;
+    this.el.roomDetailIcon.textContent = this.currentRoom.icon;
+    this.el.roomDetailName.textContent = this.currentRoom.name;
+    if (this.roomMembers.length > 0) {
+      this.el.roomDetailCount.textContent = `${this.roomMembers.length} 人在线`;
+    }
+    this.renderBuddyGrid();
+    this.renderLeaderboard();
+    this.renderActivityFeed();
+  }
+
+  renderBuddyGrid() {
+    const meTask = this.currentTaskId ? (this.tasks.find(t => t.id === this.currentTaskId)?.name || '准备专注') : (this.tasks.find(t => !t.done)?.name || '准备专注');
+    const meTime = this.mode === 'stopwatch'
+      ? (this.timerRunning ? this.timeElapsed : 0)
+      : (this.timerRunning ? this.timeLeft : (this.mode === 'focus' ? this.settings.focusDuration * 60 : this.timeLeft));
+    const meIsFocus = this.mode === 'focus' || this.mode === 'stopwatch';
+
+    let html = `
+      <div class="buddy-card me">
+        <div class="buddy-avatar" style="background:${this.currentRoom.theme}">${this.user?.avatar || '我'}</div>
+        <div class="buddy-name">我 (你)</div>
+        ${this.currentGoal ? `<div class="buddy-goal">🎯 ${this._esc(this.currentGoal)}</div>` : ''}
+        <div class="buddy-task">${meTask}</div>
+        <div class="buddy-timer ${meIsFocus ? '' : 'rest'}">${this._fmtTime(meTime)}</div>
+        <div class="buddy-status">${this.timerRunning ? (meIsFocus ? '专注中 🔥' : '休息中 ☕') : '准备中'}</div>
+      </div>
+    `;
+
+    html += this.roomMembers.filter(m => m.user_id !== this.user?.id).map(m => `
+      <div class="buddy-card" data-user-id="${m.user_id}">
+        ${m.encouraged_count > 0 ? `<div class="buddy-encourage-count">${m.encouraged_count}</div>` : ''}
+        <div class="buddy-avatar">${m.avatar || '😊'}</div>
+        <div class="buddy-name">${m.nickname || '学伴'}</div>
+        ${m.goal ? `<div class="buddy-goal">🎯 ${this._esc(m.goal)}</div>` : ''}
+        <div class="buddy-task">${m.current_task || '准备专注'}</div>
+        <div class="buddy-timer ${m.status === 'focus' ? '' : 'rest'}">${this._fmtTime(m.time_left || 0)}</div>
+        <div class="buddy-status">${m.status === 'focus' ? '专注中 🔥' : m.status === 'break' ? '休息中 ☕' : '空闲中'}</div>
+        <div class="encourage-bar" data-user-id="${m.user_id}">
+          <button class="encourage-btn" data-emoji="🔥">🔥</button>
+          <button class="encourage-btn" data-emoji="💪">💪</button>
+          <button class="encourage-btn" data-emoji="👏">👏</button>
+          <button class="encourage-btn" data-emoji="⭐">⭐</button>
+        </div>
+      </div>
+    `).join('');
+
+    this.el.buddyGrid.innerHTML = html;
+
+    this.el.buddyGrid.querySelectorAll('.buddy-card:not(.me)').forEach(card => {
+      card.addEventListener('click', e => {
+        // Encourage button clicks
+        const encourageBtn = e.target.closest('.encourage-btn');
+        if (encourageBtn) {
+          e.stopPropagation();
+          const emoji = encourageBtn.dataset.emoji;
+          const userId = card.dataset.userId;
+          if (userId && this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ type: 'encourage', target_user_id: parseInt(userId), emoji }));
+            this.showEncourageFloat(card, emoji);
+          }
+          return;
+        }
+        const userId = card.dataset.userId;
+        if (userId) this.showMemberTasks(userId, card.querySelector('.buddy-name')?.textContent || '好友');
+      });
+    });
+  }
+
+  async showMemberTasks(userId, name) {
+    this.el.memberTasksTitle.textContent = `${name} 的今日任务`;
+    this.el.memberTasksModal.classList.remove('hidden');
+    this.el.memberTasksList.innerHTML = '<div class="empty-state">加载中...</div>';
+
+    // Try WebSocket first
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'get_member_tasks', user_id: parseInt(userId) }));
+      return;
+    }
+
+    // Fallback to HTTP
+    try {
+      const tasks = await apiGet('/api/tasks/user/' + userId);
+      this.renderMemberTasksList(tasks);
+    } catch (e) {
+      this.el.memberTasksList.innerHTML = '<div class="empty-state">加载失败</div>';
+    }
+  }
+
+  renderMemberTasksList(tasks) {
+    if (!tasks || tasks.length === 0) {
+      this.el.memberTasksList.innerHTML = '<div class="empty-state">今日还没有任务</div>';
+      return;
+    }
+    this.el.memberTasksList.innerHTML = tasks.map(t => `
+      <div class="member-task-item">
+        <div class="member-task-check ${t.done ? 'done' : 'undone'}">${t.done ? '✓' : ''}</div>
+        <div class="member-task-name ${t.done ? 'done' : ''}">${this._esc(t.name)}</div>
+        ${t.target_pomos ? `<span class="task-progress">🍅${t.pomos || 0}/${t.target_pomos}</span>` : (t.pomos > 0 ? `<span class="pomo-counter">🍅 × ${t.pomos}</span>` : '')}
+      </div>
+    `).join('');
+  }
+
+  // ─── Goal Modal ──────────────────────────────
+
+  showGoalModal() {
+    if (!this.currentRoom) return;
+    this.$('#goalModal').classList.remove('hidden');
+    this.$('#goalInput').value = '';
+    this.$('#goalInput').focus();
+  }
+
+  hideGoalModal() {
+    this.$('#goalModal').classList.add('hidden');
+  }
+
+  async saveGoalAndStart() {
+    const goal = this.$('#goalInput').value.trim();
+    this.hideGoalModal();
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'set_goal', goal }));
+    }
+
+    this.currentGoal = goal;
+
+    if (this.mode === 'focus' && !this.currentTaskId && this.tasks.length > 0) {
+      const active = this.tasks.find(t => !t.done);
+      if (active) this.selectTask(active.id);
+    }
+
+    this.timerRunning = true;
+    this.startTimestamp = Date.now();
+    if (this.mode === 'stopwatch') {
+      this.timeAtStart = this.timeElapsed;
+    } else {
+      this.timeAtStart = this.timeLeft;
+    }
+
+    this.el.startBtn.innerHTML = '⏸ 暂停';
+    this.el.startBtn.style.background = '#636e72';
+    this.el.startBtn.style.boxShadow = '0 4px 14px rgba(0,0,0,0.15)';
+    if (this.mode !== 'stopwatch') this.el.skipBtn.style.display = 'flex';
+    this.el.timerLabel.textContent = this.mode === 'focus' ? '专注中...' : this.mode === 'stopwatch' ? '计时中...' : '休息中...';
+
+    this.intervalId = setInterval(() => this.tick(), 200);
+    this.sendStatusUpdate();
+  }
+
+  // ─── Study Report ─────────────────────────────
+
+  showStudyReport() {
+    const todayMin = this.todayStats.totalFocusMin;
+    const count = this.todayStats.focusCount;
+    const tasks = this.todayStats.completedTasks;
+
+    const reportStats = this.$('#reportStats');
+    reportStats.innerHTML = `
+      <div class="report-stat"><div class="report-stat-value">${count}</div><div class="report-stat-label">专注次数</div></div>
+      <div class="report-stat"><div class="report-stat-value">${todayMin}min</div><div class="report-stat-label">专注时长</div></div>
+      <div class="report-stat"><div class="report-stat-value">${tasks}</div><div class="report-stat-label">完成任务</div></div>
+    `;
+
+    this.loadAndShowStreak();
+    this.$('#reportMessage').textContent = count > 0 ? '🎉 太棒了！专注是成长的阶梯！' : '继续加油，每一次专注都算数！';
+    this.$('#studyReportModal').classList.remove('hidden');
+  }
+
+  hideStudyReport() {
+    this.$('#studyReportModal').classList.add('hidden');
+  }
+
+  async loadAndShowStreak() {
+    try {
+      const streak = await apiGet('/api/auth/streak');
+      const streakEl = this.$('#reportStreak');
+      if (streak && streak.current_streak > 0) {
+        streakEl.style.display = 'inline-flex';
+        streakEl.textContent = `🔥 连续 ${streak.current_streak} 天 · 最长 ${streak.longest_streak} 天`;
+      } else {
+        streakEl.style.display = 'none';
+      }
+    } catch (e) {
+      this.$('#reportStreak').style.display = 'none';
+    }
+  }
+
+  // ─── Room Announcement ────────────────────────
+
+  renderRoomAnnouncement(announcement) {
+    let el = this.$('#roomAnnouncement');
+    if (!announcement) {
+      if (el) el.style.display = 'none';
+      return;
+    }
+    if (!el) {
+      const div = document.createElement('div');
+      div.id = 'roomAnnouncement';
+      div.className = 'room-announcement';
+      div.innerHTML = '<div class="room-announcement-label">📢 公告</div><div class="room-announcement-text"></div>';
+      const buddyGrid = this.$('#buddyGrid');
+      buddyGrid.parentNode.insertBefore(div, buddyGrid);
+      el = div;
+    }
+    el.style.display = 'block';
+    el.querySelector('.room-announcement-text').textContent = announcement;
+  }
+
+  // ─── Encourange Float ─────────────────────────
+
+  showEncourageFloat(targetEl, emoji) {
+    const rect = targetEl.getBoundingClientRect();
+    const float = document.createElement('div');
+    float.className = 'encourage-float';
+    float.textContent = emoji;
+    float.style.left = rect.left + rect.width / 2 - 15 + 'px';
+    float.style.top = rect.top + 'px';
+    document.body.appendChild(float);
+    setTimeout(() => float.remove(), 1300);
+  }
+
+  renderLeaderboard() {
+    const all = [
+      { name: '我', time: this.todayStats.totalFocusMin, me: true, avatar: this.user?.avatar },
+      ...this.roomRanking.map(r => ({ name: r.nickname, time: r.today_focus_min || 0, me: false, avatar: r.avatar }))
+    ].filter((v, i, a) => a.findIndex(t => t.name === v.name) === i); // dedup
+
+    all.sort((a, b) => b.time - a.time);
+
+    this.el.leaderboardList.innerHTML = all.slice(0, 6).map((p, i) => {
+      const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      return `
+        <div class="leaderboard-row">
+          <div class="leaderboard-rank ${rankClass}">${i + 1}</div>
+          <div class="leaderboard-name" style="${p.me ? 'color:var(--primary);font-weight:700' : ''}">${p.avatar || ''} ${p.name}</div>
+          <div class="leaderboard-time">${p.time}min</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async leaveRoom() {
+    if (this.currentRoom) {
+      await apiPost('/api/rooms/' + this.currentRoom.code + '/leave');
+      if (this.ws) { this.ws.close(); this.ws = null; }
+      this.currentRoom = null;
+      this.roomMembers = [];
+      this.roomRanking = [];
+      this.activities = [];
+      this.currentGoal = '';
+      this.el.roomDetailPanel.style.display = 'none';
+      this.el.roomListPanel.style.display = 'block';
+      this.renderRoomList();
+    }
+  }
+
+  syncRoomTimer() {
+    this.sendStatusUpdate();
+    this.showToast('⏱ 计时已同步');
+  }
+
+  // ─── WebSocket ────────────────────────────────
+
+  connectWebSocket() {
+    if (this.ws) { this.ws.close(); }
+    const token = localStorage.getItem('pomodoro-token');
+    if (!token || !this.currentRoom) return;
+
+    this.ws = new WebSocket(WS_URL + '?token=' + token);
+
+    this.ws.onopen = () => {
+      this.ws.send(JSON.stringify({ type: 'join_room', room_code: this.currentRoom.code }));
+      this.sendStatusUpdate();
+    };
+
+    this.ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        this.handleWsMessage(msg);
+      } catch (e) {}
+    };
+
+    this.ws.onclose = () => {
+      setTimeout(() => {
+        if (this.currentRoom) this.connectWebSocket();
+      }, 3000);
+    };
+
+    this.ws.onerror = () => {};
+  }
+
+  handleWsMessage(msg) {
+    switch (msg.type) {
+      case 'members':
+        this.roomMembers = msg.data || [];
+        this.renderRoomDetail();
+        break;
+      case 'ranking':
+        this.roomRanking = msg.data || [];
+        this.renderLeaderboard();
+        break;
+      case 'system':
+        this.el.roomMessage.textContent = msg.message;
+        break;
+      case 'member_tasks':
+        this.renderMemberTasksList(msg.tasks);
+        break;
+      case 'activity':
+        this.activities.unshift({ ...msg.data, time: new Date() });
+        if (this.activities.length > 20) this.activities.pop();
+        this.renderActivityFeed();
+        break;
+      case 'encourage':
+        this.handleEncourageMsg(msg);
+        break;
+    }
+  }
+
+  handleEncourageMsg(msg) {
+    const card = this.el.buddyGrid.querySelector(`.buddy-card[data-user-id="${msg.target_user_id}"]`);
+    if (card) {
+      this.showEncourageFloat(card, msg.emoji);
+    }
+    if (msg.target_user_id === this.user?.id) {
+      this.showToast(`${msg.emoji} 有人鼓励了你！`);
+    }
+  }
+
+  renderActivityFeed() {
+    const el = this.$('#activityFeed');
+    if (!el) return;
+    if (this.activities.length === 0) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = this.activities.slice(0, 8).map(a => {
+      const time = a.time ? new Date(a.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '';
+      const member = this.roomMembers.find(m => m.user_id === a.user_id);
+      const name = member?.nickname || '学伴';
+      return `
+        <div class="activity-item">
+          <div class="activity-avatar">${member?.avatar || '😊'}</div>
+          <div class="activity-text"><strong>${name}</strong> ${a.message}</div>
+          <div class="activity-time">${time}</div>
+        </div>`;
+    }).join('');
+  }
+
+  sendStatusUpdate() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.currentRoom) return;
+    const task = this.currentTaskId ? (this.tasks.find(t => t.id === this.currentTaskId)?.name || '') : '';
+    let status = 'idle';
+    if (this.timerRunning) {
+      if (this.mode === 'stopwatch') status = 'focus';
+      else status = this.mode === 'focus' ? 'focus' : 'break';
+    }
+    const timeLeft = this.mode === 'stopwatch' ? this.timeElapsed : this.timeLeft;
+    this.ws.send(JSON.stringify({
+      type: 'status_update',
+      status,
+      time_left: timeLeft,
+      total_time: this.mode === 'stopwatch' ? 0 : this.totalTime,
+      current_task: task,
+    }));
+  }
+
+  // ─── Utilities ────────────────────────────────
+
+  _fmtTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  _esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.app = new PomodoroApp();
+});
+</script>
+</body>
+</html>
